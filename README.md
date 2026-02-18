@@ -14,7 +14,7 @@ Authenticate via CAS SSO (with optional captcha OCR), then query courses, todos,
 - 🍪 **Cookie Jar** — persistent session via `tough-cookie` + `fetch-cookie`
 - 🛡️ **Typed Errors** — `RateLimitError`, `AuthenticationError`, `NetworkError`, `ApiError`
 
-## Installation()
+## Installation
 
 Since this package is currently in development and not yet published to npm, you can install it directly from GitHub or clone it for local development.
 
