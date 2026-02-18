@@ -13,6 +13,7 @@ Authenticate via CAS SSO (with optional captcha OCR), then query courses, todos,
 - � **Auto Retry** — automatic retries with session re-authentication
 - 🍪 **Cookie Jar** — persistent session via `tough-cookie` + `fetch-cookie`
 - 🛡️ **Typed Errors** — `RateLimitError`, `AuthenticationError`, `NetworkError`, `ApiError`
+- 🤖 **Bot Adapters** — built-in formatters for Discord Embed and LINE Flex Message
 
 ## Installation
 
@@ -96,13 +97,18 @@ const tc2 = new TronClass(
 | Module | Method | Description |
 |---|---|---|
 | `tc.courses` | `.getMyCourses()` | List enrolled courses |
+| `tc.courses` | `.getRecentCourses()` | List recently visited courses |
+| `tc.courses` | `.getCourseById(courseId)` | Get a single course |
 | `tc.todos` | `.getTodos()` | List pending todo items |
-| `tc.assignments` | `.getAssignments(courseId)` | List assignments for a course |
-| `tc.assignments` | `.getAssignmentDetail(courseId, activityId)` | Get assignment details |
-| `tc.materials` | `.getMaterials(courseId)` | List course materials |
-| `tc.materials` | `.downloadFile(file, destPath)` | Download a material file |
-| `tc.grades` | `.getGrades(courseId)` | Get grades for a course |
-| `tc.announcements` | `.getAnnouncements()` | List announcements |
+| `tc.assignments` | `.getHomeworkActivities(courseId)` | List assignments for a course |
+| `tc.assignments` | `.getHomeworkDetail(courseId, activityId)` | Get assignment details |
+| `tc.assignments` | `.submitHomework(courseId, activityId, content)` | Submit homework |
+| `tc.materials` | `.getCourseMaterials(courseId)` | List course materials |
+| `tc.materials` | `.downloadFile(fileUrl)` | Download a material file |
+| `tc.grades` | `.getCourseGrades(courseId)` | Get grades for a course |
+| `tc.announcements` | `.getAnnouncements()` | List all announcements |
+| `tc.announcements` | `.getCourseAnnouncements(courseId)` | List announcements for a course |
+| `tc.announcements` | `.getNotifications()` | List notifications |
 
 ### Generic Requests
 
@@ -179,27 +185,73 @@ cp .env.example .env
 npm run example
 ```
 
+## Bot Integration (Discord / LINE)
+
+The library includes a high-level `TronClassService` and platform-specific formatters, so your bot only needs a few lines of code:
+
+```ts
+import { TronClass, Schools, TronClassService, DiscordFormatter } from 'tronclass-api';
+
+const tc = new TronClass(Schools.ASIA_UNIVERSITY);
+await tc.login({ username, password });
+
+const service = new TronClassService(tc);
+const data = await service.getUpcomingDeadlines(7);
+const embed = DiscordFormatter.formatDeadlines(data);
+// → pass embed to channel.send({ embeds: [embed] })
+```
+
+### TronClassService
+
+| Method | Description |
+|---|---|
+| `getDashboard()` | Courses + todos + announcements in one call |
+| `getCourseOverview(courseId)` | Course info + assignments + materials |
+| `getUpcomingDeadlines(days?)` | Upcoming deadlines sorted by due date |
+| `getAnnouncementSummaries(limit?)` | Recent announcements as compact summaries |
+| `getCourseGradeSummary(courseId)` | Grade breakdown for a course |
+
+### Formatters
+
+| Formatter | Output | Dependency |
+|---|---|---|
+| `DiscordFormatter` | Discord Embed JSON | None (works with `discord.js` `EmbedBuilder`) |
+| `LineFormatter` | LINE Flex Message JSON | None (works with `@line/bot-sdk`) |
+
+See [`examples/discord-bot.ts`](examples/discord-bot.ts) and [`examples/line-bot.ts`](examples/line-bot.ts) for full usage.
+
 ## Project Structure
 
 ```
 src/
-├── index.ts            # Main TronClass class & exports
+├── index.ts              # Main TronClass class & exports
 ├── auth/
-│   └── cas-auth.ts     # CAS SSO authentication
+│   └── cas-auth.ts       # CAS SSO authentication
 ├── api/
-│   ├── courses.ts      # Courses API
-│   ├── todos.ts        # Todos API
-│   ├── assignments.ts  # Assignments API
-│   ├── materials.ts    # Materials API
-│   ├── grades.ts       # Grades API
-│   └── announcements.ts# Announcements API
+│   ├── courses.ts        # Courses API
+│   ├── todos.ts          # Todos API
+│   ├── assignments.ts    # Assignments API
+│   ├── materials.ts      # Materials API
+│   ├── grades.ts         # Grades API
+│   └── announcements.ts  # Announcements API
+├── adapters/
+│   ├── adapter-types.ts      # Shared adapter types
+│   ├── tronclass-service.ts  # High-level service layer
+│   ├── discord-formatter.ts  # Discord Embed formatter
+│   └── line-formatter.ts     # LINE Flex Message formatter
 ├── core/
-│   ├── http-client.ts  # HTTP client with cookie jar & rate limiter
-│   └── errors.ts       # Error classes
+│   ├── http-client.ts    # HTTP client with cookie jar
+│   ├── rate-limiter.ts   # Rate limiter (RPM)
+│   └── errors.ts         # Error classes
 ├── config/
-│   └── schools.ts      # Preconfigured school definitions
+│   └── schools.ts        # Preconfigured school definitions
 └── types/
-    └── index.ts        # TypeScript interfaces
+    └── index.ts          # TypeScript interfaces
+
+examples/
+├── basic.ts              # Basic usage example
+├── discord-bot.ts        # Discord Bot integration example
+└── line-bot.ts           # LINE Bot integration example
 ```
 
 ## License
