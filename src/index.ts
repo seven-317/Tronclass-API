@@ -96,4 +96,10 @@ export {
   ApiError,
 } from './core/errors.js';
 
+// ─── Bot Adapters ────────────────────────────────────────────
+export { TronClassService } from './adapters/tronclass-service.js';
+export { DiscordFormatter } from './adapters/discord-formatter.js';
+export { LineFormatter } from './adapters/line-formatter.js';
+export * from './adapters/adapter-types.js';
+
 export default TronClass;
