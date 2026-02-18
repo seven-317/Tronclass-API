@@ -33,7 +33,7 @@ cp .env.example .env
 ```env
 TRON_USER=your_student_id
 TRON_PASS=your_password
-TRON_SCHOOL=ASIA_UNIVERSITY
+TRON_SCHOOL=EXAMPLE_UNIVERSITY
 ```
 
 ### 2. Use the Library
@@ -68,7 +68,7 @@ const tc = new TronClass('https://tronclass.your-school.edu');
 const tc2 = new TronClass(
   createSchoolConfig({
     name: 'My University',
-    baseUrl: 'https://tronclass.your-school.edu',
+    baseUrl: 'https://tronclass.your-school.edu.tw',
     hasCaptcha: true,
   })
 );
