@@ -39,79 +39,44 @@ export class CasAuth {
         const loginPageHtml = await loginPageResponse.text();
         const loginPageUrl = loginPageResponse.url;
 
-        const casBaseUrl = this.extractCasBaseUrl(loginPageUrl);
-
         const dom = new JSDOM(loginPageHtml);
         const doc = dom.window.document;
 
-        const ltInput = doc.querySelector('input[name="lt"]') as HTMLInputElement | null;
-        const lt = ltInput?.value;
-
-        if (!lt) {
-          throw new AuthenticationError(
-            'CSRF token (lt) not found on login page. The page structure may have changed.',
-          );
+        const form = doc.querySelector('form');
+        if (!form) {
+          throw new AuthenticationError('Login form not found on page.');
         }
 
-        let captchaCode = '';
-        const captchaImg = doc.querySelector('img[id*="captcha"], img[src*="captcha"]');
+        const actionUrl = this.resolveActionUrl(form.getAttribute('action'), loginPageUrl);
 
-        if (captchaImg) {
-          if (!ocrFunction) {
-            return {
-              success: false,
-              message: 'Login page requires a captcha but no OCR function was provided.',
-            };
-          }
+        const isKeycloak = loginPageUrl.includes('/auth/realms/') ||
+          !!doc.querySelector('input[name="captchaKey"]');
 
-          const captchaUrl = `${casBaseUrl}/cas/captcha.jpg?${Date.now()}`;
-          const imgResponse = await this.httpClient.get(captchaUrl);
-          const arrayBuffer = await imgResponse.arrayBuffer();
-          const imgBuffer = Buffer.from(arrayBuffer);
-          const base64Image = imgBuffer.toString('base64');
+        let formData: Record<string, string>;
 
-          const contentType = imgResponse.headers.get('Content-Type') || 'image/jpeg';
-          const dataUrl = `data:${contentType};base64,${base64Image}`;
-
-          captchaCode = await ocrFunction(dataUrl);
+        if (isKeycloak) {
+          formData = await this.buildKeycloakForm(doc, username, password, ocrFunction, loginPageUrl);
+        } else {
+          formData = await this.buildTraditionalCasForm(doc, username, password, ocrFunction, loginPageUrl);
         }
 
-        const formData: Record<string, string> = {
-          username,
-          password,
-          lt,
-          execution: 'e1s1',
-          _eventId: 'submit',
-          submit: '登錄',
-        };
-
-        if (captchaCode) {
-          formData.captcha = captchaCode;
-        }
-
-        const actionInput = doc.querySelector('form#fm1, form[action*="login"]');
-        const actionUrl = actionInput?.getAttribute('action');
-        const loginPostUrl = actionUrl
-          ? (actionUrl.startsWith('http') ? actionUrl : `${casBaseUrl}${actionUrl}`)
-          : `${casBaseUrl}/cas/login?next=/user/index`;
-
-        const loginResponse = await this.httpClient.postForm(loginPostUrl, formData, {
+        const loginResponse = await this.httpClient.postForm(actionUrl, formData, {
           redirect: 'follow',
         });
 
         const loginResultHtml = await loginResponse.text();
+        const finalUrl = loginResponse.url;
 
-        if (
-          loginResultHtml.includes('forget-password') ||
-          loginResultHtml.includes('cas-error') ||
-          loginResultHtml.includes('Authentication failure') ||
-          loginResultHtml.includes('密碼錯誤') ||
-          loginResultHtml.includes('帳號或密碼錯誤')
-        ) {
-          if (captchaCode && attempt < MAX_LOGIN_ATTEMPTS - 1) {
+        if (this.isLoginFailure(loginResultHtml)) {
+          if (attempt < MAX_LOGIN_ATTEMPTS - 1) {
             continue;
           }
           return { success: false, message: 'Invalid username or password.' };
+        }
+
+        if (finalUrl.includes('/user/') || !loginResultHtml.includes('login')) {
+          this.loggedIn = true;
+          return { success: true, message: 'Login successful.' };
         }
 
         this.loggedIn = true;
@@ -156,7 +121,119 @@ export class CasAuth {
     this.loggedIn = false;
   }
 
-  private extractCasBaseUrl(url: string): string {
+  private async buildKeycloakForm(
+    doc: Document,
+    username: string,
+    password: string,
+    ocrFunction: ((dataUrl: string) => Promise<string>) | undefined,
+    loginPageUrl: string,
+  ): Promise<Record<string, string>> {
+    const formData: Record<string, string> = {
+      username,
+      password,
+    };
+
+    const hasCaptcha = !!doc.querySelector('.captcha-area') ||
+      !!doc.querySelector('input[name="captchaKey"]');
+
+    if (hasCaptcha) {
+      if (!ocrFunction) {
+        throw new AuthenticationError(
+          'Login page requires a captcha but no OCR function was provided.',
+        );
+      }
+
+      const realm = this.extractRealm(loginPageUrl);
+      const keycloakBase = this.extractBaseUrl(loginPageUrl);
+      const captchaApiUrl = `${keycloakBase}/auth/realms/${realm}/captcha/code`;
+
+      const captchaResponse = await this.httpClient.get(captchaApiUrl);
+      const captchaData = await captchaResponse.json() as { image: string; key: string };
+
+      formData.captchaKey = captchaData.key;
+      formData.captchaCode = await ocrFunction(captchaData.image);
+    }
+
+    return formData;
+  }
+
+  private async buildTraditionalCasForm(
+    doc: Document,
+    username: string,
+    password: string,
+    ocrFunction: ((dataUrl: string) => Promise<string>) | undefined,
+    loginPageUrl: string,
+  ): Promise<Record<string, string>> {
+    const ltInput = doc.querySelector('input[name="lt"]') as HTMLInputElement | null;
+    const lt = ltInput?.value;
+
+    if (!lt) {
+      throw new AuthenticationError(
+        'CSRF token (lt) not found on login page. The page structure may have changed.',
+      );
+    }
+
+    const formData: Record<string, string> = {
+      username,
+      password,
+      lt,
+      execution: 'e1s1',
+      _eventId: 'submit',
+      submit: '登錄',
+    };
+
+    const captchaImg = doc.querySelector('img[id*="captcha"], img[src*="captcha"]');
+    if (captchaImg) {
+      if (!ocrFunction) {
+        throw new AuthenticationError(
+          'Login page requires a captcha but no OCR function was provided.',
+        );
+      }
+
+      const casBaseUrl = this.extractBaseUrl(loginPageUrl);
+      const captchaUrl = `${casBaseUrl}/cas/captcha.jpg?${Date.now()}`;
+      const imgResponse = await this.httpClient.get(captchaUrl);
+      const arrayBuffer = await imgResponse.arrayBuffer();
+      const imgBuffer = Buffer.from(arrayBuffer);
+      const base64Image = imgBuffer.toString('base64');
+      const contentType = imgResponse.headers.get('Content-Type') || 'image/jpeg';
+      const dataUrl = `data:${contentType};base64,${base64Image}`;
+
+      formData.captcha = await ocrFunction(dataUrl);
+    }
+
+    return formData;
+  }
+
+  private resolveActionUrl(action: string | null, pageUrl: string): string {
+    if (!action) {
+      return pageUrl;
+    }
+    if (action.startsWith('http')) {
+      return action;
+    }
+    try {
+      return new URL(action, pageUrl).href;
+    } catch {
+      const base = this.extractBaseUrl(pageUrl);
+      return `${base}${action}`;
+    }
+  }
+
+  private isLoginFailure(html: string): boolean {
+    const failureIndicators = [
+      'Authentication failure',
+      '密碼錯誤',
+      '帳號或密碼錯誤',
+      'Invalid username or password',
+      'kc-feedback-text',
+      'login-error',
+      'alert-error',
+    ];
+    return failureIndicators.some((indicator) => html.includes(indicator));
+  }
+
+  private extractBaseUrl(url: string): string {
     try {
       const parsed = new URL(url);
       return `${parsed.protocol}//${parsed.host}`;
@@ -164,5 +241,11 @@ export class CasAuth {
       const match = url.match(/^(https?:\/\/[^/]+)/);
       return match?.[1] ?? this.baseUrl;
     }
+  }
+
+  private extractRealm(url: string): string {
+    const match = url.match(/\/auth\/realms\/([^/]+)/);
+    if (match) return match[1];
+    return 'master';
   }
 }

@@ -35,7 +35,17 @@ export class HttpClient {
         const response = await this.fetcher(url, init);
         return response;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        if (error instanceof Error) {
+          lastError = error;
+        } else if (typeof error === 'string') {
+          lastError = new Error(error);
+        } else {
+          try {
+            lastError = new Error(JSON.stringify(error));
+          } catch {
+            lastError = new Error(String(error));
+          }
+        }
 
         if (attempt < this.maxRetries - 1) {
           const delay = Math.min(1000 * Math.pow(2, attempt), 5000);

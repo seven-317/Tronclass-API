@@ -102,4 +102,6 @@ export { DiscordFormatter } from './adapters/discord-formatter.js';
 export { LineFormatter } from './adapters/line-formatter.js';
 export * from './adapters/adapter-types.js';
 
+export { solveCaptcha } from './utils/captcha-ocr.js';
+
 export default TronClass;

@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { TronClass, Schools, RateLimitError } from '../src/index.js';
+import { TronClass, Schools, RateLimitError, solveCaptcha } from '../src/index.js';
 
 // ─── Main ─────────────────────────────────────────────────────
 
@@ -24,7 +24,7 @@ async function main() {
 
   console.log(`Connecting to ${tc.school.name} (${tc.school.baseUrl})...\n`);
 
-  const loginResult = await tc.login({ username, password });
+  const loginResult = await tc.login({ username, password, ocrFunction: solveCaptcha });
 
   if (!loginResult.success) {
     console.error(`Login failed: ${loginResult.message}`);
