@@ -21,7 +21,7 @@ Since this package is currently in development and not yet published to npm, you
 > **Note:** This package is ESM-only and requires Node.js 18+.
 
 ```bash
-git clone https://github.com/your-username/TronClass-API.git
+git clone https://github.com/seven-317/TronClass-API.git
 cd TronClass-API
 npm install
 ```
