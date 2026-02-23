@@ -1,19 +1,18 @@
-# TronClass API(Currently Developing)
+# TronClass API (Currently Developing)
 
 > Unofficial Node.js / TypeScript client for the [TronClass](https://www.tronclass.com/) Learning Management System.
 
-Authenticate via CAS SSO (with optional captcha OCR), then query courses, todos, assignments, materials, grades, and announcements — all through a single, typed API.
+Authenticate via Keycloak CAS SSO (with automatic captcha OCR), then query courses, todos, assignments, materials, grades, and announcements — all through a single, typed API.
 
-## Features(Developing)
+## Features (Developing)
 
-- 🔐 **CAS SSO Authentication** — automated login flow with CSRF handling and optional captcha support
-- 📚 **Full API Coverage** — courses, todos, assignments, materials, grades, announcements
+- 🔐 **Keycloak CAS Authentication** — auto-detect Keycloak vs traditional CAS, automatic captcha OCR via Tesseract.js
+- 📚 **Full API Coverage** — courses, todos, assignments, materials, grades, announcements, notifications
 - 🏫 **Multi-School Support** — preconfigured or custom school instances
 - ⚡ **Rate Limiting** — built-in, configurable request throttling (RPM)
-- � **Auto Retry** — automatic retries with session re-authentication
+- 🔄 **Auto Retry** — automatic retries with exponential backoff
 - 🍪 **Cookie Jar** — persistent session via `tough-cookie` + `fetch-cookie`
 - 🛡️ **Typed Errors** — `RateLimitError`, `AuthenticationError`, `NetworkError`, `ApiError`
-- 🤖 **Bot Adapters** — built-in formatters for Discord Embed and LINE Flex Message
 
 ## Installation
 
@@ -21,11 +20,15 @@ Since this package is currently in development and not yet published to npm, you
 
 > **Note:** This package is ESM-only and requires Node.js 18+.
 
+```bash
+git clone https://github.com/your-username/TronClass-API.git
+cd TronClass-API
+npm install
+```
+
 ## Quick Start
 
 ### 1. Configure Environment Variables
-
-Copy the example and fill in your credentials:
 
 ```bash
 cp .env.example .env
@@ -34,30 +37,37 @@ cp .env.example .env
 ```env
 TRON_USER=your_student_id
 TRON_PASS=your_password
-TRON_SCHOOL=EXAMPLE_UNIVERSITY
+TRON_SCHOOL=ASIA_UNIVERSITY
 ```
 
 ### 2. Use the Library
 
 ```ts
-import { TronClass, Schools } from 'tronclass-api';
+import { TronClass, Schools, solveCaptcha } from 'tronclass-api';
 
 const tc = new TronClass(Schools.ASIA_UNIVERSITY);
 
-await tc.login({ username: 'your_id', password: 'your_pass' });
+// Login with automatic captcha solving
+await tc.login({
+  username: 'your_id',
+  password: 'your_pass',
+  ocrFunction: solveCaptcha,
+});
 
-// Fetch courses
-const courses = await tc.courses.getMyCourses();
+// Fetch active (ongoing) courses
+const courses = await tc.courses.getActiveCourses();
 console.log(courses);
 
 // Fetch todos
 const todos = await tc.todos.getTodos();
 console.log(todos);
+
+// Fetch announcements
+const announcements = await tc.announcements.getAnnouncements();
+console.log(announcements);
 ```
 
 ### Using a Custom School
-
-If your school isn't preconfigured, pass a URL string or a `SchoolConfig` object:
 
 ```ts
 import { TronClass, createSchoolConfig } from 'tronclass-api';
@@ -89,26 +99,58 @@ const tc2 = new TronClass(
 
 | Method | Returns | Description |
 |---|---|---|
-| `tc.login({ username, password, ocrFunction? })` | `Promise<LoginResponse>` | Log in via CAS SSO. Provide `ocrFunction` if captcha is required. |
+| `tc.login({ username, password, ocrFunction? })` | `Promise<LoginResponse>` | Log in via CAS SSO. Provide `ocrFunction` for captcha. |
 | `tc.isLoggedIn` | `boolean` | Whether the session is active |
 
-### API Modules
+### Courses
 
-| Module | Method | Description |
-|---|---|---|
-| `tc.courses` | `.getMyCourses()` | List enrolled courses |
-| `tc.courses` | `.getRecentCourses()` | List recently visited courses |
-| `tc.courses` | `.getCourseById(courseId)` | Get a single course |
-| `tc.todos` | `.getTodos()` | List pending todo items |
-| `tc.assignments` | `.getHomeworkActivities(courseId)` | List assignments for a course |
-| `tc.assignments` | `.getHomeworkDetail(courseId, activityId)` | Get assignment details |
-| `tc.assignments` | `.submitHomework(courseId, activityId, content)` | Submit homework |
-| `tc.materials` | `.getCourseMaterials(courseId)` | List course materials |
-| `tc.materials` | `.downloadFile(fileUrl)` | Download a material file |
-| `tc.grades` | `.getCourseGrades(courseId)` | Get grades for a course |
-| `tc.announcements` | `.getAnnouncements()` | List all announcements |
-| `tc.announcements` | `.getCourseAnnouncements(courseId)` | List announcements for a course |
-| `tc.announcements` | `.getNotifications()` | List notifications |
+| Method | Description |
+|---|---|
+| `.getMyCourses(conditions?)` | List enrolled courses (all semesters by default) |
+| `.getActiveCourses()` | List currently active (ongoing) courses |
+| `.getRecentCourses()` | List recently visited courses |
+| `.getCourseById(courseId)` | Get a single course |
+| `.getCourseModules(courseId)` | Get course modules/sections |
+| `.getMySemesters()` | List my semesters |
+| `.getMyAcademicYears()` | List my academic years |
+
+### Todos
+
+| Method | Description |
+|---|---|
+| `.getTodos()` | List pending todo items |
+
+### Assignments
+
+| Method | Description |
+|---|---|
+| `.getHomeworkActivities(courseId)` | List assignments for a course |
+| `.getHomeworkDetail(courseId, activityId)` | Get assignment details |
+| `.submitHomework(courseId, activityId, content)` | Submit homework |
+
+### Materials
+
+| Method | Description |
+|---|---|
+| `.getCourseMaterials(courseId)` | List course materials/activities |
+| `.downloadFile(fileUrl)` | Download a material file |
+
+### Grades
+
+| Method | Description |
+|---|---|
+| `.getCourseGrades(courseId)` | Get exam scores for a course |
+| `.getExamList(courseId)` | Get exam list for a course |
+
+### Announcements & Notifications
+
+| Method | Description |
+|---|---|
+| `.getAnnouncements(page?, pageSize?)` | List institution-wide bulletins |
+| `.getLatestBulletins()` | Get latest bulletins (for dashboard) |
+| `.getClassifications()` | Get bulletin categories |
+| `.getCourseAnnouncements(courseId)` | List announcements for a course |
+| `.getNotifications()` | List alert messages |
 
 ### Generic Requests
 
@@ -154,16 +196,28 @@ try {
 
 ## Captcha Support
 
-Some schools require a captcha during login. Provide an OCR function to handle it:
+Asia University uses Keycloak CAS with a captcha. The built-in `solveCaptcha` uses Tesseract.js with image preprocessing (grayscale, noise removal, morphological filtering) for automatic OCR:
+
+```ts
+import { solveCaptcha } from 'tronclass-api';
+
+await tc.login({
+  username: 'your_id',
+  password: 'your_pass',
+  ocrFunction: solveCaptcha, // Built-in Tesseract.js OCR
+});
+```
+
+You can also provide a custom OCR function:
 
 ```ts
 await tc.login({
   username: 'your_id',
   password: 'your_pass',
   ocrFunction: async (dataUrl: string) => {
-    // dataUrl is a base64-encoded image (e.g. "data:image/jpeg;base64,...")
-    // Use any OCR service to solve it and return the text
-    return solveCaptcha(dataUrl);
+    // dataUrl is a base64-encoded image (e.g. "data:image/png;base64,...")
+    // Use any OCR service and return the captcha text
+    return myCustomOcr(dataUrl);
   },
 });
 ```
@@ -185,73 +239,33 @@ cp .env.example .env
 npm run example
 ```
 
-## Bot Integration (Discord / LINE)
-
-The library includes a high-level `TronClassService` and platform-specific formatters, so your bot only needs a few lines of code:
-
-```ts
-import { TronClass, Schools, TronClassService, DiscordFormatter } from 'tronclass-api';
-
-const tc = new TronClass(Schools.ASIA_UNIVERSITY);
-await tc.login({ username, password });
-
-const service = new TronClassService(tc);
-const data = await service.getUpcomingDeadlines(7);
-const embed = DiscordFormatter.formatDeadlines(data);
-// → pass embed to channel.send({ embeds: [embed] })
-```
-
-### TronClassService
-
-| Method | Description |
-|---|---|
-| `getDashboard()` | Courses + todos + announcements in one call |
-| `getCourseOverview(courseId)` | Course info + assignments + materials |
-| `getUpcomingDeadlines(days?)` | Upcoming deadlines sorted by due date |
-| `getAnnouncementSummaries(limit?)` | Recent announcements as compact summaries |
-| `getCourseGradeSummary(courseId)` | Grade breakdown for a course |
-
-### Formatters
-
-| Formatter | Output | Dependency |
-|---|---|---|
-| `DiscordFormatter` | Discord Embed JSON | None (works with `discord.js` `EmbedBuilder`) |
-| `LineFormatter` | LINE Flex Message JSON | None (works with `@line/bot-sdk`) |
-
-See [`examples/discord-bot.ts`](examples/discord-bot.ts) and [`examples/line-bot.ts`](examples/line-bot.ts) for full usage.
-
 ## Project Structure
 
 ```
 src/
 ├── index.ts              # Main TronClass class & exports
 ├── auth/
-│   └── cas-auth.ts       # CAS SSO authentication
+│   └── cas-auth.ts       # Keycloak / traditional CAS authentication
 ├── api/
 │   ├── courses.ts        # Courses API
 │   ├── todos.ts          # Todos API
 │   ├── assignments.ts    # Assignments API
 │   ├── materials.ts      # Materials API
 │   ├── grades.ts         # Grades API
-│   └── announcements.ts  # Announcements API
-├── adapters/
-│   ├── adapter-types.ts      # Shared adapter types
-│   ├── tronclass-service.ts  # High-level service layer
-│   ├── discord-formatter.ts  # Discord Embed formatter
-│   └── line-formatter.ts     # LINE Flex Message formatter
+│   └── announcements.ts  # Announcements & Notifications API
 ├── core/
 │   ├── http-client.ts    # HTTP client with cookie jar
 │   ├── rate-limiter.ts   # Rate limiter (RPM)
 │   └── errors.ts         # Error classes
 ├── config/
 │   └── schools.ts        # Preconfigured school definitions
+├── utils/
+│   └── captcha-ocr.ts    # Captcha OCR (Tesseract.js + preprocessing)
 └── types/
     └── index.ts          # TypeScript interfaces
 
 examples/
-├── basic.ts              # Basic usage example
-├── discord-bot.ts        # Discord Bot integration example
-└── line-bot.ts           # LINE Bot integration example
+└── basic.ts              # Basic usage example
 ```
 
 ## License
