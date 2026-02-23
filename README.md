@@ -4,7 +4,7 @@
 
 Authenticate via CAS SSO (with optional captcha OCR), then query courses, todos, assignments, materials, grades, and announcements — all through a single, typed API.
 
-## Features
+## Features(Developing)
 
 - 🔐 **CAS SSO Authentication** — automated login flow with CSRF handling and optional captcha support
 - 📚 **Full API Coverage** — courses, todos, assignments, materials, grades, announcements
