@@ -89,7 +89,13 @@ export class HttpClient {
   }
 
   async getJson<T = unknown>(url: string, init?: RequestInit): Promise<T> {
-    const response = await this.get(url, init);
+    const response = await this.get(url, {
+      ...init,
+      headers: {
+        'Accept': 'application/json',
+        ...init?.headers,
+      },
+    });
 
     if (!response.ok) {
       const body = await response.text().catch(() => '');

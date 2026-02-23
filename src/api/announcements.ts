@@ -7,24 +7,24 @@ export class AnnouncementsApi {
     private baseUrl: string,
   ) {}
 
-  async getAnnouncements(): Promise<Announcement[]> {
-    const data = await this.httpClient.getJson<{ announcements: Announcement[] }>(
-      `${this.baseUrl}/api/announcements`,
+  async getAnnouncements(page: number = 1, perPage: number = 20): Promise<Announcement[]> {
+    const data = await this.httpClient.getJson<{ bulletins: Announcement[] }>(
+      `${this.baseUrl}/api/org-bulletin/bulletins?page=${page}&per_page=${perPage}`,
     );
-    return data.announcements;
+    return data.bulletins ?? [];
   }
 
   async getCourseAnnouncements(courseId: number): Promise<Announcement[]> {
-    const data = await this.httpClient.getJson<{ announcements: Announcement[] }>(
-      `${this.baseUrl}/api/courses/${courseId}/announcements`,
+    const data = await this.httpClient.getJson<{ bulletins: Announcement[] }>(
+      `${this.baseUrl}/api/courses/${courseId}/bulletins`,
     );
-    return data.announcements;
+    return data.bulletins ?? [];
   }
 
-  async getNotifications(): Promise<Notification[]> {
+  async getNotifications(page: number = 1, perPage: number = 20): Promise<Notification[]> {
     const data = await this.httpClient.getJson<{ notifications: Notification[] }>(
-      `${this.baseUrl}/api/notifications`,
+      `${this.baseUrl}/api/user/notifications?page=${page}&per_page=${perPage}`,
     );
-    return data.notifications;
+    return data.notifications ?? [];
   }
 }

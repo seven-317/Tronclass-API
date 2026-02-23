@@ -61,11 +61,30 @@ export class CasAuth {
         }
 
         const loginResponse = await this.httpClient.postForm(actionUrl, formData, {
-          redirect: 'follow',
+          redirect: 'manual',
         });
 
+        // A successful Keycloak login returns 302 redirect
+        if (loginResponse.status >= 300 && loginResponse.status < 400) {
+          // Follow the redirect chain manually to complete ST exchange
+          let nextUrl = loginResponse.headers.get('location');
+          while (nextUrl) {
+            const redirectResponse = await this.httpClient.get(nextUrl, {
+              redirect: 'manual',
+            });
+            if (redirectResponse.status >= 300 && redirectResponse.status < 400) {
+              nextUrl = redirectResponse.headers.get('location');
+            } else {
+              break;
+            }
+          }
+
+          this.loggedIn = true;
+          return { success: true, message: 'Login successful.' };
+        }
+
+        // Status 200 means we got the login page back (wrong captcha or credentials)
         const loginResultHtml = await loginResponse.text();
-        const finalUrl = loginResponse.url;
 
         if (this.isLoginFailure(loginResultHtml)) {
           if (attempt < MAX_LOGIN_ATTEMPTS - 1) {
@@ -74,13 +93,19 @@ export class CasAuth {
           return { success: false, message: 'Invalid username or password.' };
         }
 
-        if (finalUrl.includes('/user/') || !loginResultHtml.includes('login')) {
-          this.loggedIn = true;
-          return { success: true, message: 'Login successful.' };
+        // If the page still contains a login form, it's a captcha failure
+        if (loginResultHtml.includes('captchaCode') || loginResultHtml.includes('captcha-area')) {
+          if (attempt < MAX_LOGIN_ATTEMPTS - 1) {
+            continue;
+          }
+          return { success: false, message: 'Captcha verification failed after multiple attempts.' };
         }
 
-        this.loggedIn = true;
-        return { success: true, message: 'Login successful.' };
+        // Fallback: if no redirect and no clear failure, consider it failed
+        if (attempt < MAX_LOGIN_ATTEMPTS - 1) {
+          continue;
+        }
+        return { success: false, message: 'Login failed: unexpected response.' };
       } catch (error) {
         if (error instanceof AuthenticationError) {
           return { success: false, message: error.message };
