@@ -131,3 +131,19 @@ export interface Notification {
   created_at?: string;
   [key: string]: unknown;
 }
+
+export interface Semester {
+  id: number;
+  name: string;
+  academic_year_id: number;
+  is_active: boolean;
+  [key: string]: unknown;
+}
+
+export interface AcademicYear {
+  id: number;
+  name: string;
+  is_active: boolean;
+  sort?: number;
+  [key: string]: unknown;
+}

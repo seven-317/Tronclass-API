@@ -3,7 +3,7 @@ import { HttpClient } from '../core/http-client.js';
 import { AuthenticationError } from '../core/errors.js';
 import type { LoginOptions, LoginResponse } from '../types/index.js';
 
-const MAX_LOGIN_ATTEMPTS = 3;
+const MAX_LOGIN_ATTEMPTS = 5;
 
 export class CasAuth {
   private httpClient: HttpClient;

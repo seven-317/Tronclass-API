@@ -35,14 +35,11 @@ async function main() {
 
   // ── Courses ──────────────────────────────────────────────
   try {
-    console.log('Fetching courses...');
-    const courses = await tc.courses.getMyCourses();
+    console.log('Fetching active courses...');
+    const courses = await tc.courses.getActiveCourses();
     console.log(`Found ${courses.length} courses:`);
-    for (const course of courses.slice(0, 5)) {
+    for (const course of courses) {
       console.log(`[${course.id}] ${course.name}`);
-    }
-    if (courses.length > 5) {
-      console.log(`... and ${courses.length - 5} more`);
     }
     console.log();
   } catch (error) {

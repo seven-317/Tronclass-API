@@ -7,9 +7,10 @@ export class MaterialsApi {
     private baseUrl: string,
   ) {}
 
+  /** 課程教材/活動 */
   async getCourseMaterials(courseId: number): Promise<CourseMaterial[]> {
     const data = await this.httpClient.getJson<{ activities: CourseMaterial[] }>(
-      `${this.baseUrl}/api/courses/${courseId}/activities`,
+      `${this.baseUrl}/api/courses/${courseId}/activities?sub_course_id=0`,
     );
     return data.activities;
   }
