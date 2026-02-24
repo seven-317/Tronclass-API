@@ -1,86 +1,122 @@
 import type { TronClass } from '../index.js';
 import type {
   DashboardData,
-  CourseOverviewData,
+  CourseOverview,
   DeadlineItem,
   AnnouncementSummary,
-  GradeSummaryData,
+  CourseGradeSummary,
 } from './adapter-types.js';
 
 export class TronClassService {
   constructor(private tc: TronClass) {}
 
   async getDashboard(): Promise<DashboardData> {
-    const [courses, todos, announcements] = await Promise.all([
-      this.tc.courses.getMyCourses(),
-      this.tc.todos.getTodos(),
-      this.tc.announcements.getAnnouncements(),
+    const [activeCourses, recentTodos, recentAnnouncements] = await Promise.all([
+      this.tc.courses.getActiveCourses().catch(() => []),
+      this.tc.todos.getTodos().catch(() => []),
+      this.tc.announcements.getLatestBulletins().catch(() => []),
     ]);
-    return { courses, todos, announcements };
+
+    return {
+      activeCourses,
+      recentTodos,
+      recentAnnouncements,
+    };
   }
 
-  async getCourseOverview(courseId: number): Promise<CourseOverviewData> {
-    const [course, assignments, materials] = await Promise.all([
-      this.tc.courses.getCourseById(courseId),
-      this.tc.assignments.getHomeworkActivities(courseId),
-      this.tc.materials.getCourseMaterials(courseId),
+  async getCourseOverview(courseId: number): Promise<CourseOverview> {
+    const [course, assignments, materials, announcements] = await Promise.all([
+      this.tc.courses.getCourseById(courseId).catch(() => null),
+      this.tc.assignments.getHomeworkActivities(courseId).catch(() => []),
+      this.tc.materials.getCourseMaterials(courseId).catch(() => []),
+      this.tc.announcements.getCourseAnnouncements(courseId).catch(() => []),
     ]);
-    return { course, assignments, materials };
+
+    if (!course) {
+      throw new Error(`Course not found: ${courseId}`);
+    }
+
+    return {
+      course,
+      assignments,
+      materials,
+      announcements,
+    };
   }
 
   async getUpcomingDeadlines(days: number = 7): Promise<DeadlineItem[]> {
+    const todos = await this.tc.todos.getTodos().catch(() => []);
+    const courses = await this.tc.courses.getActiveCourses().catch(() => []);
+    
+    const deadlines: DeadlineItem[] = [];
     const now = new Date();
-    const cutoff = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(now.getDate() + days);
 
-    const todos = await this.tc.todos.getTodos();
+    for (const todo of todos) {
+      if (todo.due_at) {
+        const dueDate = new Date(todo.due_at);
+        if (dueDate >= now && dueDate <= cutoffDate) {
+          deadlines.push({
+            courseName: todo.course_name || 'System',
+            title: todo.title,
+            dueAt: todo.due_at,
+            type: 'todo',
+          });
+        }
+      }
+    }
 
-    const deadlines: DeadlineItem[] = todos
-      .filter((todo) => {
-        if (!todo.due_at) return true;
-        const due = new Date(todo.due_at);
-        return due >= now && due <= cutoff;
+    await Promise.all(
+      courses.map(async (course) => {
+        const assignments = await this.tc.assignments.getHomeworkActivities(course.id).catch(() => []);
+        for (const assign of assignments) {
+          if (assign.due_at) {
+            const dueDate = new Date(assign.due_at);
+            if (dueDate >= now && dueDate <= cutoffDate) {
+              deadlines.push({
+                courseName: course.name,
+                title: assign.title,
+                dueAt: assign.due_at,
+                type: 'assignment',
+              });
+            }
+          }
+        }
       })
-      .map((todo) => ({
-        title: todo.title,
-        courseName: todo.course_name,
-        courseId: todo.course_id,
-        dueAt: todo.due_at,
-        type: 'todo' as const,
-        status: todo.status,
-      }));
+    );
 
-    deadlines.sort((a, b) => {
-      if (!a.dueAt) return 1;
-      if (!b.dueAt) return -1;
-      return new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime();
-    });
-
+    deadlines.sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime());
     return deadlines;
   }
 
-  async getAnnouncementSummaries(limit: number = 10): Promise<AnnouncementSummary[]> {
-    const announcements = await this.tc.announcements.getAnnouncements();
-
-    return announcements.slice(0, limit).map((ann) => ({
-      id: ann.id,
+  async getAnnouncementSummaries(limit: number = 5): Promise<AnnouncementSummary[]> {
+    const announcements = await this.tc.announcements.getLatestBulletins().catch(() => []);
+    
+    return announcements.slice(0, limit).map(ann => ({
+      courseName: ann.course_name,
       title: ann.title,
       author: ann.author,
-      courseName: ann.course_name,
       createdAt: ann.created_at,
-      preview: ann.content
-        ? ann.content.replace(/<[^>]*>/g, '').slice(0, 100)
-        : undefined,
     }));
   }
 
-  async getCourseGradeSummary(courseId: number): Promise<GradeSummaryData> {
-    const grade = await this.tc.grades.getCourseGrades(courseId);
+  async getCourseGradeSummary(courseId: number): Promise<CourseGradeSummary> {
+    const gradeData = await this.tc.grades.getCourseGrades(courseId).catch(() => null);
+    
+    if (!gradeData) {
+      throw new Error(`Grade data not available for course: ${courseId}`);
+    }
 
     return {
-      courseId: grade.course_id,
-      courseName: grade.course_name,
-      totalScore: grade.total_score,
-      items: grade.grade_items ?? [],
+      courseName: gradeData.course_name,
+      totalScore: gradeData.total_score,
+      gradeItems: (gradeData.grade_items || []).map(item => ({
+        title: item.title,
+        score: item.score,
+        maxScore: item.max_score,
+        weight: item.weight,
+      })),
     };
   }
 }

@@ -230,6 +230,42 @@ await tc.login({
 
 > **Adding a new school?** Use `createSchoolConfig()` or submit a PR to `src/config/schools.ts`.
 
+## Bot Integration (Discord / LINE)
+
+The library includes a high-level `TronClassService` and platform-specific formatters, so your bot only needs a few lines of code to generate rich UI components:
+
+```ts
+import { TronClass, Schools, TronClassService, DiscordFormatter } from 'tronclass-api';
+
+const tc = new TronClass(Schools.ASIA_UNIVERSITY);
+await tc.login({ username, password });
+
+const service = new TronClassService(tc);
+const data = await service.getUpcomingDeadlines(7);
+const embed = DiscordFormatter.formatDeadlines(data);
+
+// → pass embed to channel.send({ embeds: [embed] }) for Discord
+```
+
+### TronClassService
+
+| Method | Description |
+|---|---|
+| `getDashboard()` | Active Courses + recent todos + latest announcements |
+| `getCourseOverview(courseId)` | Course info + assignments + materials |
+| `getUpcomingDeadlines(days?)` | Upcoming deadlines sorted by due date |
+| `getAnnouncementSummaries(limit?)` | Recent announcements as compact summaries |
+| `getCourseGradeSummary(courseId)` | Grade breakdown for a course |
+
+### Formatters
+
+| Formatter | Output | Dependency |
+|---|---|---|
+| `DiscordFormatter` | Discord Embed JSON | None (works with `discord.js` `EmbedBuilder`) |
+| `LineFormatter` | LINE Flex Message JSON | None (works with `@line/bot-sdk`) |
+
+See [`examples/discord-bot.ts`](examples/discord-bot.ts) and [`examples/line-bot.ts`](examples/line-bot.ts) for full usage.
+
 ## Running the Example
 
 ```bash

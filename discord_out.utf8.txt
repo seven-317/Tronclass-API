@@ -1,0 +1,34 @@
+﻿Logging in...
+Login successful!
+
+--- Generating Discord Dashboard ---
+{
+  "title": "?? TronClass Dashboard",
+  "color": 39423,
+  "fields": [
+    {
+      "name": "Active Courses (0)",
+      "value": "None",
+      "inline": false
+    },
+    {
+      "name": "Recent Todos (0)",
+      "value": "None",
+      "inline": false
+    },
+    {
+      "name": "Latest Announcements (0)",
+      "value": "None",
+      "inline": false
+    }
+  ],
+  "timestamp": "2026-02-24T08:02:26.801Z"
+}
+
+--- Generating Discord Deadlines (Next 14 days) ---
+{
+  "title": "??No Upcoming Deadlines",
+  "description": "You are all caught up!",
+  "color": 2664261,
+  "timestamp": "2026-02-24T08:02:26.833Z"
+}

@@ -5,113 +5,43 @@ import type {
   HomeworkActivity,
   CourseMaterial,
   CourseGrade,
-  GradeItem,
-  Notification,
 } from '../types/index.js';
 
 export interface DashboardData {
-  courses: Course[];
-  todos: TodoItem[];
-  announcements: Announcement[];
+  activeCourses: Course[];
+  recentTodos: TodoItem[];
+  recentAnnouncements: Announcement[];
 }
 
-export interface CourseOverviewData {
+export interface CourseOverview {
   course: Course;
   assignments: HomeworkActivity[];
   materials: CourseMaterial[];
+  announcements: Announcement[];
 }
 
 export interface DeadlineItem {
+  courseName: string;
   title: string;
-  courseName?: string;
-  courseId?: number;
-  dueAt?: string;
+  dueAt: string;
   type: 'todo' | 'assignment';
-  status?: string;
-}
-
-export interface AnnouncementSummary {
-  id: number;
-  title: string;
-  author?: string;
-  courseName?: string;
-  createdAt?: string;
-  preview?: string;
-}
-
-export interface GradeSummaryData {
-  courseId: number;
-  courseName?: string;
-  totalScore?: number;
-  items: GradeItem[];
-}
-
-export interface DiscordEmbedField {
-  name: string;
-  value: string;
-  inline?: boolean;
-}
-
-export interface DiscordEmbedFooter {
-  text: string;
-  icon_url?: string;
-}
-
-export interface DiscordEmbed {
-  title?: string;
-  description?: string;
-  color?: number;
-  fields?: DiscordEmbedField[];
-  footer?: DiscordEmbedFooter;
-  timestamp?: string;
   url?: string;
 }
 
-export interface LineFlexText {
-  type: 'text';
-  text: string;
-  size?: string;
-  weight?: string;
-  color?: string;
-  wrap?: boolean;
-  margin?: string;
-  flex?: number;
+export interface AnnouncementSummary {
+  courseName?: string;
+  title: string;
+  author?: string;
+  createdAt?: string;
 }
 
-export interface LineFlexBox {
-  type: 'box';
-  layout: 'horizontal' | 'vertical' | 'baseline';
-  contents: LineFlexComponent[];
-  margin?: string;
-  spacing?: string;
-  paddingAll?: string;
-  backgroundColor?: string;
-  cornerRadius?: string;
-}
-
-export interface LineFlexSeparator {
-  type: 'separator';
-  margin?: string;
-  color?: string;
-}
-
-export type LineFlexComponent = LineFlexText | LineFlexBox | LineFlexSeparator;
-
-export interface LineFlexBubble {
-  type: 'bubble';
-  size?: string;
-  header?: LineFlexBox;
-  body?: LineFlexBox;
-  footer?: LineFlexBox;
-}
-
-export interface LineFlexCarousel {
-  type: 'carousel';
-  contents: LineFlexBubble[];
-}
-
-export interface LineFlexMessage {
-  type: 'flex';
-  altText: string;
-  contents: LineFlexBubble | LineFlexCarousel;
+export interface CourseGradeSummary {
+  courseName?: string;
+  totalScore?: number;
+  gradeItems: {
+    title: string;
+    score?: number;
+    maxScore?: number;
+    weight?: number;
+  }[];
 }

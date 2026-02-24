@@ -1,55 +1,40 @@
 import 'dotenv/config';
-import {
-  TronClass,
-  Schools,
-  TronClassService,
-  LineFormatter,
+import { 
+  TronClass, 
+  Schools, 
+  TronClassService, 
+  LineFormatter, 
+  solveCaptcha 
 } from '../src/index.js';
 
 async function main() {
   const username = process.env.TRON_USER;
   const password = process.env.TRON_PASS;
-  const schoolKey = process.env.TRON_SCHOOL;
 
-  if (!username || !password || !schoolKey) {
-    throw new Error('Set TRON_USER, TRON_PASS, TRON_SCHOOL env vars.');
+  if (!username || !password) {
+    throw new Error('Please set TRON_USER and TRON_PASS environment variables.');
   }
 
-  const schoolConfig = Schools[schoolKey as keyof typeof Schools];
-  if (!schoolConfig) {
-    throw new Error(`Unknown school "${schoolKey}". Available: ${Object.keys(Schools).join(', ')}`);
-  }
-
-  const tc = new TronClass(schoolConfig);
-  const login = await tc.login({ username, password });
-  if (!login.success) throw new Error(`Login failed: ${login.message}`);
+  const tc = new TronClass(Schools.ASIA_UNIVERSITY);
+  console.log('Logging in...');
+  await tc.login({
+    username,
+    password,
+    ocrFunction: solveCaptcha,
+  });
+  console.log('Login successful!\n');
 
   const service = new TronClassService(tc);
+  
+  console.log('--- Generating LINE Dashboard Flex Message ---');
+  const dashboardData = await service.getDashboard();
+  const dashboardFlex = LineFormatter.formatDashboard(dashboardData);
+  console.log(JSON.stringify(dashboardFlex, null, 2));
 
-  console.log('=== Dashboard (LINE Flex) ===');
-  const dashboard = await service.getDashboard();
-  const dashFlex = LineFormatter.formatDashboard(dashboard);
-  console.log(JSON.stringify(dashFlex, null, 2));
-
-  console.log('\n=== Upcoming Deadlines (LINE Flex) ===');
-  const deadlines = await service.getUpcomingDeadlines(7);
-  const deadlineFlex = LineFormatter.formatDeadlines(deadlines);
-  console.log(JSON.stringify(deadlineFlex, null, 2));
-
-  console.log('\n=== Announcements (LINE Flex) ===');
-  const announcements = await service.getAnnouncementSummaries(5);
-  const annFlex = LineFormatter.formatAnnouncements(announcements);
-  console.log(JSON.stringify(annFlex, null, 2));
-
-  // ─────────────────────────────────────────────────────────────
-  // In a real LINE bot, you would do:
-  //
-  //   const { Client } = require('@line/bot-sdk');
-  //   const client = new Client({ channelAccessToken: '...' });
-  //   await client.replyMessage(replyToken, dashFlex);
-  //
-  // The formatter output is directly compatible with LINE's API.
-  // ─────────────────────────────────────────────────────────────
+  console.log('\n--- Generating LINE Deadlines Flex Message (Next 14 days) ---');
+  const deadlines = await service.getUpcomingDeadlines(14);
+  const deadlinesFlex = LineFormatter.formatDeadlines(deadlines);
+  console.log(JSON.stringify(deadlinesFlex, null, 2));
 }
 
 main().catch(console.error);
