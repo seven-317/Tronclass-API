@@ -32,12 +32,27 @@ export class CasAuth {
 
     for (let attempt = 0; attempt < MAX_LOGIN_ATTEMPTS; attempt++) {
       try {
-        const loginPageResponse = await this.httpClient.get(
-          `${this.baseUrl}/login?next=/user/index`,
-          { redirect: 'follow' },
-        );
+        let currentUrl = `${this.baseUrl}/login?next=/user/index`;
+        let loginPageResponse!: Response;
+
+        const MAX_REDIRECTS = 10;
+        for (let r = 0; r < MAX_REDIRECTS; r++) {
+          loginPageResponse = await this.httpClient.get(currentUrl, {
+            redirect: 'manual',
+          });
+
+          if (loginPageResponse.status >= 300 && loginPageResponse.status < 400) {
+            const location = loginPageResponse.headers.get('location');
+            if (!location) break;
+            currentUrl = new URL(location, currentUrl).href;
+            continue;
+          }
+
+          break;
+        }
+
         const loginPageHtml = await loginPageResponse.text();
-        const loginPageUrl = loginPageResponse.url;
+        const loginPageUrl = currentUrl;
 
         const dom = new JSDOM(loginPageHtml);
         const doc = dom.window.document;
@@ -50,7 +65,9 @@ export class CasAuth {
         const actionUrl = this.resolveActionUrl(form.getAttribute('action'), loginPageUrl);
 
         const isKeycloak = loginPageUrl.includes('/auth/realms/') ||
-          !!doc.querySelector('input[name="captchaKey"]');
+          loginPageUrl.includes('/realms/') ||
+          !!doc.querySelector('input[name="captchaKey"]') ||
+          !!doc.querySelector('#kc-form-login');
 
         let formData: Record<string, string>;
 
