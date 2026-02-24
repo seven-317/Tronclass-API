@@ -5,10 +5,12 @@ import type {
   HomeworkActivity,
   CourseMaterial,
   CourseGrade,
+  Rollcall,
 } from '../types/index.js';
 
 export interface DashboardData {
   activeCourses: Course[];
+  activeRollcalls: Rollcall[];
   recentTodos: TodoItem[];
   recentAnnouncements: Announcement[];
 }

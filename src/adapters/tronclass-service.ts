@@ -11,14 +11,16 @@ export class TronClassService {
   constructor(private tc: TronClass) {}
 
   async getDashboard(): Promise<DashboardData> {
-    const [activeCourses, recentTodos, recentAnnouncements] = await Promise.all([
+    const [activeCourses, activeRollcalls, recentTodos, recentAnnouncements] = await Promise.all([
       this.tc.courses.getActiveCourses().catch(() => []),
+      this.tc.attendance.getActiveRollcalls().catch(() => []),
       this.tc.todos.getTodos().catch(() => []),
       this.tc.announcements.getLatestBulletins().catch(() => []),
     ]);
 
     return {
       activeCourses,
+      activeRollcalls,
       recentTodos,
       recentAnnouncements,
     };

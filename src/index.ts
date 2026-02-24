@@ -6,6 +6,7 @@ import { AssignmentsApi } from './api/assignments.js';
 import { MaterialsApi } from './api/materials.js';
 import { GradesApi } from './api/grades.js';
 import { AnnouncementsApi } from './api/announcements.js';
+import { AttendanceApi } from './api/attendance.js';
 import type { SchoolConfig, LoginOptions, LoginResponse } from './types/index.js';
 
 export class TronClass {
@@ -20,6 +21,7 @@ export class TronClass {
   public readonly materials: MaterialsApi;
   public readonly grades: GradesApi;
   public readonly announcements: AnnouncementsApi;
+  public readonly attendance: AttendanceApi;
 
   constructor(
     config: SchoolConfig | string,
@@ -45,6 +47,7 @@ export class TronClass {
     this.materials = new MaterialsApi(this.httpClient, this.baseUrl);
     this.grades = new GradesApi(this.httpClient, this.baseUrl);
     this.announcements = new AnnouncementsApi(this.httpClient, this.baseUrl);
+    this.attendance = new AttendanceApi(this.httpClient, this.baseUrl);
   }
 
   get school(): SchoolConfig {

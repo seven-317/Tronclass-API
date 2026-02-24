@@ -22,6 +22,13 @@ export class DiscordFormatter {
           inline: false,
         },
         {
+          name: `Active Rollcalls (${data.activeRollcalls.length})`,
+          value: data.activeRollcalls.length > 0 
+            ? data.activeRollcalls.map(r => `• 🚨 **${r.course_title}**`).join('\n') 
+            : 'None',
+          inline: false,
+        },
+        {
           name: `Recent Todos (${data.recentTodos.length})`,
           value: data.recentTodos.slice(0, 3).map(t => `• ${t.title}`).join('\n') || 'None',
           inline: false,

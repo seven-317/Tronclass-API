@@ -28,6 +28,7 @@ export class LineFormatter {
         spacing: 'md',
         contents: [
           this.createSection(`Active Courses (${data.activeCourses.length})`, data.activeCourses.slice(0, 3).map(c => c.name)),
+          this.createSection(`Active Rollcalls (${data.activeRollcalls.length})`, data.activeRollcalls.map(r => `🚨 ${r.course_title}`)),
           this.createSection(`Recent Todos (${data.recentTodos.length})`, data.recentTodos.slice(0, 3).map(t => t.title)),
           this.createSection(`Announcements (${data.recentAnnouncements.length})`, data.recentAnnouncements.slice(0, 3).map(a => a.title)),
         ]

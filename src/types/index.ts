@@ -132,6 +132,22 @@ export interface Notification {
   [key: string]: unknown;
 }
 
+export interface Rollcall {
+  rollcall_id: number;
+  course_id?: number;
+  course_title?: string;
+  created_by_name?: string;
+  is_number?: boolean;
+  status: string; // e.g., "on_call", "ended"
+  source?: string;
+  [key: string]: unknown;
+}
+
+export interface RollcallSubmitResult {
+  status: string;
+  [key: string]: unknown;
+}
+
 export interface Semester {
   id: number;
   name: string;
