@@ -245,6 +245,7 @@ await tc.login({
 | Key | Name |
 |---|---|
 | `ASIA_UNIVERSITY` | 亞洲大學 |
+| `SHIH_CHIEN_UNIVERSITY` | 實踐大學 |
 
 > **Adding a new school?** Use `createSchoolConfig()` or submit a PR to `src/config/schools.ts`.
 
