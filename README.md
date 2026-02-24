@@ -276,4 +276,4 @@ If you use this code in a commercial project, I would be very grateful if you co
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=seven-317/Tronclass-API&type=Date)](https://www.star-history.com/#seven-317/Tronclass-API&type=Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=seven-317/Tronclass-API&type=date&legend=top-left)](https://www.star-history.com/#seven-317/Tronclass-API&type=date&legend=top-left)
