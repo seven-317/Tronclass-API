@@ -8,13 +8,14 @@ export class AttendanceApi {
   ) {}
 
   /**
-   * 取得所有正在進行中的簽到 (包含各課程)
+   * 取得所有正在進行中的數字簽到 (目前暫時將雷達簽到過濾掉)
    */
   async getActiveRollcalls(): Promise<Rollcall[]> {
     const data = await this.httpClient.getJson<{ rollcalls: Rollcall[] }>(
       `${this.baseUrl}/api/radar/rollcalls?api_version=1.1.0`,
     );
-    return data.rollcalls ?? [];
+    // 暫時過濾掉非數字(雷達)簽到，僅保留 is_number 為 true 的點名
+    return (data.rollcalls ?? []).filter((r) => r.is_number);
   }
 
   /**
