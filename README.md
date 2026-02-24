@@ -1,3 +1,6 @@
+[![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-yellow.svg)](https://buymeacoffee.com/seven317)
+
+
 # TronClass API (Currently Developing)
 
 > Unofficial Node.js / TypeScript client for the [TronClass](https://www.tronclass.com/) Learning Management System.
