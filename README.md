@@ -3,7 +3,7 @@
 
 # TronClass API (Currently Developing)
 
-> Unofficial Node.js / TypeScript client for the [TronClass](https://www.tronclass.com/) Learning Management System.
+> Unofficial Node.js / TypeScript client for the [TronClass](https://www.tronclass.com/).
 
 Authenticate via Keycloak CAS SSO (with automatic captcha OCR), then query courses, todos, assignments, materials, grades, and announcements — all through a single, typed API.
 
