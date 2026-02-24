@@ -158,10 +158,17 @@ const tc2 = new TronClass(
 
 ### Attendance (Rollcall)
 
+> **💡 Important Note on PIN Codes:**
+> It is **impossible** to retrieve the 4-digit attendance PIN code via the API. The PIN is generated and stored securely on the server and is only displayed on the instructor's screen.
+> 
+> **Why use this API?**
+> You can integrate this API with a Discord or LINE bot. When a classmate shares the 4-digit PIN in your group chat, you can simply type a command (e.g., `!rollcall 1234`) to your bot, and it will instantly submit the attendance for you without needing to open the slow TronClass app!
+
 | Method | Description |
 |---|---|
 | `.getActiveRollcalls()` | List all currently active rollcalls across courses |
 | `.submitNumberRollcall(rollcallId, code)` | Submit a 4-digit PIN for a rollcall |
+<!-- | `.submitRadarRollcall(...)` | (Currently commented out / unused) | -->
 
 ### Generic Requests
 
