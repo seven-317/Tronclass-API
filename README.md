@@ -13,6 +13,7 @@ Authenticate via Keycloak CAS SSO (with automatic captcha OCR), then query cours
 - 🔄 **Auto Retry** — automatic retries with exponential backoff
 - 🍪 **Cookie Jar** — persistent session via `tough-cookie` + `fetch-cookie`
 - 🛡️ **Typed Errors** — `RateLimitError`, `AuthenticationError`, `NetworkError`, `ApiError`
+- 🤖 **Bot Adapters** — Discord and LINE bot adapters
 
 ## Installation
 
