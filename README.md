@@ -301,7 +301,9 @@ src/
     └── index.ts          # TypeScript interfaces
 
 examples/
-└── basic.ts              # Basic usage example
+├── basic.ts              # Basic usage example
+├── discord-bot.ts        # Discord bot example
+└── line-bot.ts           # LINE bot example
 ```
 
 ## License
