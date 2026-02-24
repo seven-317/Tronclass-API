@@ -6,7 +6,7 @@ Authenticate via Keycloak CAS SSO (with automatic captcha OCR), then query cours
 
 ## Features (Developing)
 
-- 🔐 **Keycloak CAS Authentication** — auto-detect Keycloak vs traditional CAS, automatic captcha OCR via Tesseract.js
+- 🔐 **Keycloak CAS Authentication** — auto-detect Keycloak vs traditional CAS, automatic captcha OCR via [Tesseract.js](https://github.com/naptha/tesseract.js/)
 - 📚 **Full API Coverage** — courses, todos, assignments, materials, grades, announcements, notifications
 - 🏫 **Multi-School Support** — preconfigured or custom school instances
 - ⚡ **Rate Limiting** — built-in, configurable request throttling (RPM)
