@@ -153,6 +153,13 @@ const tc2 = new TronClass(
 | `.getCourseAnnouncements(courseId)` | List announcements for a course |
 | `.getNotifications()` | List alert messages |
 
+### Attendance (Rollcall)
+
+| Method | Description |
+|---|---|
+| `.getActiveRollcalls()` | List all currently active rollcalls across courses |
+| `.submitNumberRollcall(rollcallId, code)` | Submit a 4-digit PIN for a rollcall |
+
 ### Generic Requests
 
 For endpoints not covered by the built-in modules:
@@ -252,7 +259,7 @@ const embed = DiscordFormatter.formatDeadlines(data);
 
 | Method | Description |
 |---|---|
-| `getDashboard()` | Active Courses + recent todos + latest announcements |
+| `getDashboard()` | Active Courses + active rollcalls + recent todos + latest announcements |
 | `getCourseOverview(courseId)` | Course info + assignments + materials |
 | `getUpcomingDeadlines(days?)` | Upcoming deadlines sorted by due date |
 | `getAnnouncementSummaries(limit?)` | Recent announcements as compact summaries |
@@ -289,7 +296,8 @@ src/
 │   ├── assignments.ts    # Assignments API
 │   ├── materials.ts      # Materials API
 │   ├── grades.ts         # Grades API
-│   └── announcements.ts  # Announcements & Notifications API
+│   ├── announcements.ts  # Announcements & Notifications API
+│   └── attendance.ts     # Attendance API (Rollcalls)
 ├── core/
 │   ├── http-client.ts    # HTTP client with cookie jar
 │   ├── rate-limiter.ts   # Rate limiter (RPM)
