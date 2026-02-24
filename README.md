@@ -276,4 +276,10 @@ If you use this code in a commercial project, I would be very grateful if you co
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=seven-317/Tronclass-API&type=date&legend=top-left)](https://www.star-history.com/#seven-317/Tronclass-API&type=date&legend=top-left)
+<a href="https://www.star-history.com/#seven-317/Tronclass-API&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=seven-317/Tronclass-API&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=seven-317/Tronclass-API&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=seven-317/Tronclass-API&type=date&legend=top-left" />
+ </picture>
+</a>
