@@ -34,8 +34,10 @@ export class AnnouncementsApi {
 
   /** 課程公告 */
   async getCourseAnnouncements(courseId: number): Promise<Announcement[]> {
+    const conditions = JSON.stringify({ start_date: "", end_date: "", keyword: "" });
+    
     const data = await this.httpClient.getJson<{ bulletins: Announcement[] }>(
-      `${this.baseUrl}/api/courses/${courseId}/bulletin`,
+      `${this.baseUrl}/api/courses/${courseId}/bulletins?conditions=${encodeURIComponent(conditions)}`,
     );
     return data.bulletins ?? [];
   }
