@@ -133,18 +133,21 @@ export interface Notification {
 }
 
 export interface Rollcall {
-  rollcall_id: number;
+  id: number;
   course_id?: number;
   course_title?: string;
   created_by_name?: string;
   is_number?: boolean;
+  number_code?: string;
   status: string; // e.g., "on_call", "ended"
   source?: string;
+  rollcall_time: string;
   [key: string]: unknown;
 }
 
 export interface RollcallSubmitResult {
-  status: string;
+  status?: string;
+  message?: string;
   [key: string]: unknown;
 }
 
