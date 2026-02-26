@@ -35,7 +35,7 @@ export class AnnouncementsApi {
   /** 課程公告 */
   async getCourseAnnouncements(courseId: number): Promise<Announcement[]> {
     const data = await this.httpClient.getJson<{ bulletins: Announcement[] }>(
-      `${this.baseUrl}/api/courses/${courseId}/bulletins`,
+      `${this.baseUrl}/api/courses/${courseId}/bulletin`,
     );
     return data.bulletins ?? [];
   }
