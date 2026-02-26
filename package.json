@@ -5,6 +5,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seven-317/Tronclass-API.git"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -16,7 +20,7 @@
     "lms",
     "education"
   ],
-  "author": "",
+  "author": "seven317",
   "license": "MIT",
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
