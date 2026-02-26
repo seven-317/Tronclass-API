@@ -167,7 +167,7 @@ Creates a new TronClass client instance.
 ### Attendance (Rollcall)
 
 > **💡 Important Note on PIN Codes:**
-> At this time, the bot cannot automatically retrieve the 4-digit attendance PIN code. While theoretically possible, the specific API endpoint has not been discovered yet, as the PIN is secured server-side. If anyone finds a way to fetch it, pull requests are highly welcome!
+> At this time, the API cannot automatically retrieve the 4-digit attendance PIN code. While theoretically possible, as the PIN is secured server-side with account permission checker. If anyone finds a way to fetch it, pull requests are highly welcome!
 > 
 > **Why use this API?**
 > You can integrate this API with a Discord or LINE bot. When a classmate shares the 4-digit PIN in your group chat, you can simply type a command (e.g., `!rollcall 1234`) to your bot, and it will instantly submit the attendance for you without needing to open the slow TronClass app!
