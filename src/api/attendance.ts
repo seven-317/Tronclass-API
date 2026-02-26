@@ -53,12 +53,12 @@ export class AttendanceApi {
   }
 
   /**
-   * 取得全域雷達簽到任務 (保留你原本的功能，通常用來掃描全校廣播的雷達)
+   * 取得雷達簽到任務
    */
-  async getRadarRollcalls(): Promise<Rollcall[]> {
+  async getActiveRollcalls(): Promise<Rollcall[]> {
     const data = await this.httpClient.getJson<{ rollcalls: Rollcall[] }>(
       `${this.baseUrl}/api/radar/rollcalls?api_version=1.1.0`,
     );
-    return data.rollcalls ?? [];
+    return (data.rollcalls ?? []).filter((r) => r.is_number);
   }
 }
