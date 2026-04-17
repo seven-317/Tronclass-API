@@ -12,6 +12,44 @@
 
 Authenticate via Keycloak CAS SSO (with automatic captcha OCR), then query courses, todos, assignments, materials, grades, announcements, and attendance — all through a single, typed API.
 
+## 🎉 What's New in v2.0.0
+
+### 🔧 Critical Bug Fix: Attendance Number Code Retrieval
+
+**Previous Issue (v1.x):**
+- `getActiveRollcalls()` returned rollcall objects with `number_code: null`
+- Used `/api/radar/rollcalls` endpoint which doesn't include the actual PIN code
+- Users couldn't programmatically retrieve attendance codes
+
+**Fixed in v2.0.0:**
+- ✅ **Number codes now properly extracted** from `/api/training/activities` endpoint
+- ✅ **Global scanning maintained** — scans all enrolled courses in parallel using `Promise.all`
+- ✅ **Robust error handling** — continues processing even if individual course requests fail
+- ✅ **Fully tested** — comprehensive property-based tests with fast-check ensure correctness
+
+**Migration Guide:**
+No breaking changes! The API remains the same:
+
+```ts
+const rollcalls = await tc.attendance.getActiveRollcalls();
+// Now returns rollcalls with valid number_code values
+console.log(rollcalls[0].number_code); // "1234" instead of null
+```
+
+**Technical Details:**
+The new implementation:
+1. Fetches all user courses via `/api/my-courses`
+2. Queries `/api/training/activities?course_id={id}` for each course in parallel
+3. Filters for active attendance activities (type 16, status 1, allow_checkin true)
+4. Extracts number codes from `option.answer` field
+5. Returns flattened results maintaining the original global behavior
+
+### 🧪 Testing Infrastructure
+
+- Added comprehensive test suite using Vitest and fast-check
+- Property-based testing ensures correctness across wide input domains
+- Preservation tests guarantee no regressions in existing functionality
+
 ## Features
 
 - 🔐 **Keycloak CAS Authentication** — auto-detect Keycloak vs traditional CAS, automatic captcha OCR via [Tesseract.js](https://github.com/naptha/tesseract.js/)
@@ -166,16 +204,35 @@ Creates a new TronClass client instance.
 
 ### Attendance (Rollcall)
 
-> **💡 Important Note on PIN Codes:**
-> At this time, the API cannot automatically retrieve the 4-digit attendance PIN code. While theoretically possible, as the PIN is secured server-side with account permission checker. If anyone finds a way to fetch it, pull requests are highly welcome!
-> 
-> **Why use this API?**
-> You can integrate this API with a Discord or LINE bot. When a classmate shares the 4-digit PIN in your group chat, you can simply type a command (e.g., `!rollcall 1234`) to your bot, and it will instantly submit the attendance for you without needing to open the slow TronClass app!
+> **✨ New in v2.0.0:**
+> The attendance API now properly retrieves 4-digit PIN codes! Previously, `getActiveRollcalls()` returned `number_code: null`. This has been fixed by switching to the `/api/training/activities` endpoint.
 
 | Method | Description |
 |---|---|
-| `.getActiveRollcalls()` | List all currently active rollcalls across all enrolled courses |
+| `.getActiveRollcalls()` | List all currently active rollcalls across all enrolled courses **with valid PIN codes** |
 | `.submitNumberRollcall(rollcallId, code)` | Submit a 4-digit PIN code for a rollcall |
+
+**Example Usage:**
+
+```ts
+// Get active rollcalls with PIN codes
+const rollcalls = await tc.attendance.getActiveRollcalls();
+
+for (const rollcall of rollcalls) {
+  console.log(`Course: ${rollcall.course_title}`);
+  console.log(`PIN Code: ${rollcall.number_code}`); // Now returns actual code like "1234"
+  console.log(`Status: ${rollcall.status}`);
+  
+  // Auto-submit if you want
+  if (rollcall.number_code) {
+    await tc.attendance.submitNumberRollcall(rollcall.id, rollcall.number_code);
+    console.log('✅ Attendance submitted!');
+  }
+}
+```
+
+**Bot Integration:**
+You can integrate this with a Discord or LINE bot to automatically check for active rollcalls and notify you with the PIN code, or even auto-submit attendance!
 
 ### Generic Requests
 

@@ -1,6 +1,27 @@
 import type { HttpClient } from '../core/http-client.js';
 import type { Rollcall, RollcallSubmitResult } from '../types/index.js';
 
+/**
+ * Training Activity structure from /api/training/activities endpoint
+ */
+interface Activity {
+  id: number;
+  type: number;
+  status: number;
+  allow_checkin: boolean;
+  course_id?: number;
+  course_title?: string;
+  created_by_name?: string;
+  source?: string;
+  created_at?: string;
+  start_time?: string;
+  option?: {
+    answer?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 export class AttendanceApi {
   constructor(
     private httpClient: HttpClient,
@@ -54,11 +75,53 @@ export class AttendanceApi {
 
   /**
    * 取得雷達簽到任務
+   * 
+   * 注意：此方法會掃描所有課程的活動，以維持原有的「全域掃描」行為
    */
   async getActiveRollcalls(): Promise<Rollcall[]> {
-    const data = await this.httpClient.getJson<{ rollcalls: Rollcall[] }>(
-      `${this.baseUrl}/api/radar/rollcalls?api_version=1.1.0`,
+    // Step 1: Get all courses for the user
+    const coursesData = await this.httpClient.getJson<{ courses: Array<{ id: number }> }>(
+      `${this.baseUrl}/api/my-courses`,
     );
-    return (data.rollcalls ?? []).filter((r) => r.is_number);
+    const courses = coursesData.courses ?? [];
+    
+    // Step 2: Fetch activities for all courses in parallel
+    const activitiesPromises = courses.map(async (course) => {
+      try {
+        const data = await this.httpClient.getJson<{ activities: Activity[] }>(
+          `${this.baseUrl}/api/training/activities?course_id=${course.id}`,
+        );
+        return data.activities ?? [];
+      } catch (error) {
+        // If a course fails, log and continue with other courses
+        console.warn(`Failed to fetch activities for course ${course.id}:`, error);
+        return [];
+      }
+    });
+    
+    const allActivitiesArrays = await Promise.all(activitiesPromises);
+    
+    // Step 3: Flatten all activities from all courses
+    const allActivities = allActivitiesArrays.flat();
+    
+    // Step 4: Filter for active attendance activities
+    const attendanceActivities = allActivities.filter(
+      (activity) => 
+        activity.type === 16 &&           // Attendance type
+        activity.status === 1 &&          // Active status
+        activity.allow_checkin === true   // Check-in allowed
+    );
+    
+    // Step 5: Map activities to Rollcall structure with number_code extraction
+    return attendanceActivities.map((activity) => {
+      const { type, allow_checkin, option, ...rest } = activity;
+      return {
+        ...rest,
+        is_number: true,
+        number_code: option?.answer ?? undefined,  // Extract from option.answer
+        status: activity.status === 1 ? "on_call" : "ended",
+        rollcall_time: activity.created_at ?? activity.start_time ?? new Date().toISOString(),
+      };
+    });
   }
 }
