@@ -12,7 +12,7 @@
 
 Authenticate via Keycloak CAS SSO (with automatic captcha OCR), then query courses, todos, assignments, materials, grades, announcements, and attendance — all through a single, typed API.
 
-## 🎉 What's New in v2.0.0
+## 🎉 What's New in v3.0.0
 
 ### 🔧 Critical Bug Fix: Attendance Number Code Retrieval
 
@@ -21,7 +21,7 @@ Authenticate via Keycloak CAS SSO (with automatic captcha OCR), then query cours
 - Used `/api/radar/rollcalls` endpoint which doesn't include the actual PIN code
 - Users couldn't programmatically retrieve attendance codes
 
-**Fixed in v2.0.0:**
+**Fixed in v3.0.0:**
 - ✅ **Number codes now properly extracted** from `/api/training/activities` endpoint
 - ✅ **Global scanning maintained** — scans all enrolled courses in parallel using `Promise.all`
 - ✅ **Robust error handling** — continues processing even if individual course requests fail
@@ -204,7 +204,7 @@ Creates a new TronClass client instance.
 
 ### Attendance (Rollcall)
 
-> **✨ New in v2.0.0:**
+> **✨ New in v3.0.0:**
 > The attendance API now properly retrieves 4-digit PIN codes! Previously, `getActiveRollcalls()` returned `number_code: null`. This has been fixed by switching to the `/api/training/activities` endpoint.
 
 | Method | Description |

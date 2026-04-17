@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v3.0.0.html).
 
 ## [2.0.0] - 2026-04-17
 
@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📝 Documentation
 
-- Updated README with v2.0.0 changes and migration guide
+- Updated README with v3.0.0 changes and migration guide
 - Removed outdated warning about PIN code retrieval limitations
 - Added example usage for the fixed attendance API
 - Added technical implementation details
@@ -45,7 +45,7 @@ No breaking changes! The API signature remains the same:
 const rollcalls = await tc.attendance.getActiveRollcalls();
 console.log(rollcalls[0].number_code); // null ❌
 
-// After (v2.0.0): number_code contains actual PIN
+// After (v3.0.0): number_code contains actual PIN
 const rollcalls = await tc.attendance.getActiveRollcalls();
 console.log(rollcalls[0].number_code); // "1234" ✅
 ```
@@ -62,5 +62,5 @@ console.log(rollcalls[0].number_code); // "1234" ✅
 - Discord and LINE bot adapters
 - TypeScript type definitions
 
-[2.0.0]: https://github.com/seven-317/TronClass-API/compare/v1.2.1...v2.0.0
+[2.0.0]: https://github.com/seven-317/TronClass-API/compare/v1.2.1...v3.0.0
 [1.2.1]: https://github.com/seven-317/TronClass-API/releases/tag/v1.2.1
