@@ -98,6 +98,7 @@ export {
   NetworkError,
   ApiError,
 } from './core/errors.js';
+export { NumberCodeNotFoundError } from './api/attendance.js';
 
 // ─── Bot Adapters ────────────────────────────────────────────
 export { TronClassService } from './adapters/tronclass-service.js';

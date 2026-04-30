@@ -3,6 +3,11 @@ import { CookieJar } from 'tough-cookie';
 import { RateLimiter } from './rate-limiter.js';
 import { ApiError, NetworkError } from './errors.js';
 
+export interface RequestOptions {
+  skipRateLimit?: boolean;
+  maxRetries?: number;
+}
+
 export class HttpClient {
   private jar: CookieJar;
   private fetcher: typeof fetch;
@@ -25,17 +30,24 @@ export class HttpClient {
     this.fetcher = fetchCookie(fetch, this.jar) as unknown as typeof fetch;
   }
 
-  async request(url: string, init?: RequestInit): Promise<Response> {
-    this.rateLimiter.acquire();
+  async request(url: string, init?: RequestInit, options?: RequestOptions): Promise<Response> {
+    if (!options?.skipRateLimit) {
+      this.rateLimiter.acquire();
+    }
+
+    const maxRetries = options?.maxRetries ?? this.maxRetries;
 
     let lastError: Error | undefined;
 
-    for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         const response = await this.fetcher(url, init);
         return response;
       } catch (error) {
         if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            throw error;
+          }
           lastError = error;
         } else if (typeof error === 'string') {
           lastError = new Error(error);
@@ -47,7 +59,7 @@ export class HttpClient {
           }
         }
 
-        if (attempt < this.maxRetries - 1) {
+        if (attempt < maxRetries - 1) {
           const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
           await new Promise((resolve) => setTimeout(resolve, delay));
         }
@@ -55,7 +67,7 @@ export class HttpClient {
     }
 
     throw new NetworkError(
-      `Request failed after ${this.maxRetries} attempts: ${lastError?.message}`,
+      `Request failed after ${maxRetries} attempts: ${lastError?.message}`,
     );
   }
 

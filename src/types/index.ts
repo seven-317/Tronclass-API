@@ -139,7 +139,7 @@ export interface Rollcall {
   created_by_name?: string;
   is_number?: boolean;
   number_code?: string;
-  status: string; // e.g., "on_call", "ended"
+  status: string;
   source?: string;
   rollcall_time: string;
   [key: string]: unknown;
@@ -149,6 +149,36 @@ export interface RollcallSubmitResult {
   status?: string;
   message?: string;
   [key: string]: unknown;
+}
+
+export type TryRollcallResult =
+  | { ok: true; statusCode: number; result: RollcallSubmitResult }
+  | { ok: false; statusCode: number; body: string };
+
+export interface BruteForceProgress {
+  tested: number;
+  total: number;
+  current: string;
+  found: boolean;
+  elapsedMs: number;
+}
+
+export interface BruteForceOptions {
+  concurrency?: number;
+  startFrom?: number;
+  endAt?: number;
+  shuffle?: boolean;
+  delayMs?: number;
+  onProgress?: (info: BruteForceProgress) => void;
+  isMatch?: (result: TryRollcallResult, numberCode: string) => boolean;
+  signal?: AbortSignal;
+}
+
+export interface BruteForceResult {
+  numberCode: string;
+  result: RollcallSubmitResult;
+  attempts: number;
+  durationMs: number;
 }
 
 export interface Semester {
