@@ -12,10 +12,22 @@
 
 透過 Keycloak CAS SSO 自動登入（含驗證碼自動 OCR 辨識），並查詢課程、待辦、作業、教材、成績、公告、點名等所有資源 — 全部透過一個帶完整型別的 API。
 
+> ⛔ **npm 上版本暫時下架中**（無法 publish v4.0.0），請見下方 [npm 套件暫時下架公告](#-npm-套件暫時下架公告)。要安裝請從 GitHub 取得 → [安裝方式](#安裝)。
+
 ## ⚠️ 免責聲明（v4.0.0）
 
 > **此專案僅作為學習用途製作，不保證可用性、穩定性，亦不保證任何使用情境下的合法性。**
 > 使用者應自行承擔使用本套件所造成的一切後果。請勿將本套件用於違反學校或 TronClass 服務條款的場景。
+
+## ⛔ npm 套件暫時下架公告
+
+> **目前本套件的 npm 上版本已暫時下架，不會更新到 v4.0.0。**
+>
+> 原因：我目前無法正常使用 npm 帳號的 2FA（雙重認證）功能，所以無法 publish 新版本。
+>
+> 在 npm 重新可用前，**請不要透過 `npm install tronclass-api` 安裝**（即使裝得到也是舊的 v3 / v2 版本，且 v3 中關於 PIN 取得的說明是錯誤資訊）。請改用下方的「替代安裝方式」直接從 GitHub 取得最新的 v4.0.0 程式碼。
+>
+> 等 2FA 問題解決後會盡快恢復 npm publish。造成不便敬請見諒。
 
 ## 🎉 v4.0.0 更新內容
 
@@ -87,11 +99,119 @@ console.log(`找到 PIN：${result.numberCode}，共嘗試 ${result.attempts} �
 
 ## 安裝
 
+> **注意：** 本套件為 ESM-only，需要 Node.js 18 以上版本。
+>
+> ⛔ **目前 npm 上版本已暫停發布**（詳見上方公告），請使用以下任一替代方式取得 v4.0.0。
+
+### 方式 A：直接從 GitHub 安裝（推薦）
+
+最簡單的方式，npm/yarn/pnpm 都支援直接從 GitHub repo 安裝：
+
 ```bash
-npm install tronclass-api
+# npm
+npm install github:seven-317/Tronclass-API
+
+# 指定特定 branch / tag / commit
+npm install github:seven-317/Tronclass-API#main
+npm install github:seven-317/Tronclass-API#v4.0.0
+
+# yarn
+yarn add github:seven-317/Tronclass-API
+
+# pnpm
+pnpm add github:seven-317/Tronclass-API
 ```
 
-> **注意：** 本套件為 ESM-only，需要 Node.js 18 以上版本。
+安裝完成後在 `package.json` 的 `dependencies` 會看到：
+
+```json
+{
+  "dependencies": {
+    "tronclass-api": "github:seven-317/Tronclass-API"
+  }
+}
+```
+
+之後就能像普通的 npm 套件一樣 import 使用：
+
+```ts
+import { TronClass, Schools, solveCaptcha } from 'tronclass-api';
+```
+
+> ⚠️ 從 GitHub 安裝時 npm 會自動執行 `npm install` 與 build。若你的環境沒有 TypeScript / `tsc`，可能需要在你的專案內執行：
+> ```bash
+> cd node_modules/tronclass-api
+> npm install
+> npm run build
+> ```
+
+### 方式 B：Clone repo 後用 `npm link` 連結
+
+適合想同時修改本套件原始碼、邊改邊用的人：
+
+```bash
+# 1. clone 本 repo 到你習慣的位置
+git clone https://github.com/seven-317/Tronclass-API.git
+cd Tronclass-API
+
+# 2. 安裝相依套件 + 編譯
+npm install
+npm run build
+
+# 3. 把這個資料夾註冊成全域可連結
+npm link
+
+# 4. 切到你的專案資料夾，把它連進來
+cd /path/to/your-project
+npm link tronclass-api
+```
+
+之後就可以一樣 `import { TronClass } from 'tronclass-api'`。
+若想取消連結：在你的專案執行 `npm unlink tronclass-api`，在 repo 執行 `npm unlink -g tronclass-api`。
+
+### 方式 C：Clone 後用相對路徑安裝
+
+不想用 `npm link` 的話，也可以把 repo clone 到任何位置，然後在你的專案 `package.json` 用 `file:` 協議引用：
+
+```bash
+# 1. clone 並 build
+git clone https://github.com/seven-317/Tronclass-API.git
+cd Tronclass-API
+npm install
+npm run build
+
+# 2. 在你的專案資料夾安裝
+cd /path/to/your-project
+npm install /path/to/Tronclass-API
+```
+
+或在 `package.json` 直接寫：
+
+```json
+{
+  "dependencies": {
+    "tronclass-api": "file:../Tronclass-API"
+  }
+}
+```
+
+然後跑 `npm install`。
+
+### 方式 D：直接複製原始碼進你的專案
+
+如果你只想用其中一兩個功能（例如只想用 `bruteForceNumberRollcall`），也可以直接把 `src/` 整個資料夾複製到你的專案裡，並把以下相依套件加到自己 `package.json`：
+
+```bash
+npm install fetch-cookie tough-cookie tesseract.js jsdom canvas dotenv
+```
+
+然後在你的程式裡用相對路徑 import：
+
+```ts
+import { TronClass } from './tronclass-src/index.js';
+```
+
+> 注意：本套件 `src/` 內所有 import 路徑都是 `.js` 結尾（ESM 規範），即使檔案是 `.ts`。請保留 TypeScript 的 ESM 設定（`"module": "ESNext"`、`"moduleResolution": "Bundler"` 或 `"NodeNext"`）。
 
 ## 快速開始
 
