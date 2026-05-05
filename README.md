@@ -12,22 +12,10 @@
 
 透過 Keycloak CAS SSO 自動登入（含驗證碼自動 OCR 辨識），並查詢課程、待辦、作業、教材、成績、公告、點名等所有資源 — 全部透過一個帶完整型別的 API。
 
-> ⛔ **npm 上版本暫時下架中**（無法 publish v4.0.0），請見下方 [npm 套件暫時下架公告](#-npm-套件暫時下架公告)。要安裝請從 GitHub 取得 → [安裝方式](#安裝)。
-
 ## ⚠️ 免責聲明（v4.0.0）
 
 > **此專案僅作為學習用途製作，不保證可用性、穩定性，亦不保證任何使用情境下的合法性。**
 > 使用者應自行承擔使用本套件所造成的一切後果。請勿將本套件用於違反學校或 TronClass 服務條款的場景。
-
-## ⛔ npm 套件暫時下架公告
-
-> **目前本套件的 npm 上版本已暫時下架，不會更新到 v4.0.0。**
->
-> 原因：我目前無法正常使用 npm 帳號的 2FA（雙重認證）功能，所以無法 publish 新版本。
->
-> 在 npm 重新可用前，**請不要透過 `npm install tronclass-api` 安裝**（即使裝得到也是舊的 v3 / v2 版本，且 v3 中關於 PIN 取得的說明是錯誤資訊）。請改用下方的「替代安裝方式」直接從 GitHub 取得最新的 v4.0.0 程式碼。
->
-> 等 2FA 問題解決後會盡快恢復 npm publish。造成不便敬請見諒。
 
 ## 🎉 v4.0.0 更新內容
 
@@ -100,12 +88,32 @@ console.log(`找到 PIN：${result.numberCode}，共嘗試 ${result.attempts} �
 ## 安裝
 
 > **注意：** 本套件為 ESM-only，需要 Node.js 18 以上版本。
->
-> ⛔ **目前 npm 上版本已暫停發布**（詳見上方公告），請使用以下任一替代方式取得 v4.0.0。
 
-### 方式 A：直接從 GitHub 安裝（推薦）
+### 方式 A：從 npm 安裝（推薦）
 
-最簡單的方式，npm/yarn/pnpm 都支援直接從 GitHub repo 安裝：
+```bash
+npm install tronclass-api
+# 或指定版本，例如：
+# npm install tronclass-api@4.0.0
+```
+
+```bash
+yarn add tronclass-api
+```
+
+```bash
+pnpm add tronclass-api
+```
+
+之後即可：
+
+```ts
+import { TronClass, Schools, solveCaptcha } from 'tronclass-api';
+```
+
+### 方式 B：直接從 GitHub 安裝
+
+npm / yarn / pnpm 都支援直接從 GitHub repo 安裝（適合需要 main、特定 tag、或 fork 的人）：
 
 ```bash
 # npm
@@ -145,7 +153,7 @@ import { TronClass, Schools, solveCaptcha } from 'tronclass-api';
 > npm run build
 > ```
 
-### 方式 B：Clone repo 後用 `npm link` 連結
+### 方式 C：Clone repo 後用 `npm link` 連結
 
 適合想同時修改本套件原始碼、邊改邊用的人：
 
@@ -169,7 +177,7 @@ npm link tronclass-api
 之後就可以一樣 `import { TronClass } from 'tronclass-api'`。
 若想取消連結：在你的專案執行 `npm unlink tronclass-api`，在 repo 執行 `npm unlink -g tronclass-api`。
 
-### 方式 C：Clone 後用相對路徑安裝
+### 方式 D：Clone 後用相對路徑安裝
 
 不想用 `npm link` 的話，也可以把 repo clone 到任何位置，然後在你的專案 `package.json` 用 `file:` 協議引用：
 
@@ -197,7 +205,7 @@ npm install /path/to/Tronclass-API
 
 然後跑 `npm install`。
 
-### 方式 D：直接複製原始碼進你的專案
+### 方式 E：直接複製原始碼進你的專案
 
 如果你只想用其中一兩個功能（例如只想用 `bruteForceNumberRollcall`），也可以直接把 `src/` 整個資料夾複製到你的專案裡，並把以下相依套件加到自己 `package.json`：
 
