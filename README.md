@@ -1,18 +1,18 @@
-[![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-yellow.svg)](https://buymeacoffee.com/seven317)
+[BuyMeACoffee](https://buymeacoffee.com/seven317)
 
 # TronClass API
 
-[![npm version](https://img.shields.io/npm/v/tronclass-api.svg)](https://www.npmjs.com/package/tronclass-api)
-[![npm downloads](https://img.shields.io/npm/dm/tronclass-api.svg)](https://www.npmjs.com/package/tronclass-api)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[npm version](https://www.npmjs.com/package/tronclass-api)
+[npm downloads](https://www.npmjs.com/package/tronclass-api)
+[License: MIT](https://opensource.org/licenses/MIT)
+[Node.js](https://nodejs.org/)
+[TypeScript](https://www.typescriptlang.org/)
 
 > 非官方的 [TronClass](https://www.tronclass.com/) Node.js / TypeScript 函式庫。
 
 透過 Keycloak CAS SSO 自動登入（含驗證碼自動 OCR 辨識），並查詢課程、待辦、作業、教材、成績、公告、點名等所有資源 — 全部透過一個帶完整型別的 API。
 
-## ⚠️ 免責聲明（v4.0.0）
+## ⚠️ 免責聲明（v4.0.1）
 
 > **此專案僅作為學習用途製作，不保證可用性、穩定性，亦不保證任何使用情境下的合法性。**
 > 使用者應自行承擔使用本套件所造成的一切後果。請勿將本套件用於違反學校或 TronClass 服務條款的場景。
@@ -27,7 +27,7 @@ v3.0.0 的早期版本/文件曾暗示 `getActiveRollcalls()` 能直接取得 4 
 
 既然伺服器不會主動給 PIN，v4.0.0 採用**完全不同的實作策略** — 對 `0000`–`9999` 共 10000 組組合進行高併發測試，命中正確 PIN 即停止：
 
-- ✅ **`bruteForceNumberRollcall()`** — 共享工作佇列 + worker pool + AbortController 設計
+- ✅ `**bruteForceNumberRollcall()`** — 共享工作佇列 + worker pool + AbortController 設計
 - ✅ **可組態併發數** — 預設 50，可依網路與伺服器情況調整
 - ✅ **找到即終止** — 任一 worker 命中後，立刻 `abort()` 中止其他 in-flight 請求
 - ✅ **進度回呼** — `onProgress` 即時回報嘗試進度
@@ -40,6 +40,7 @@ v3.0.0 的早期版本/文件曾暗示 `getActiveRollcalls()` 能直接取得 4 
 > **目前 v4.0.0 僅通過 TypeScript 編譯與 24 個 vitest 單元測試（含 fast-check property test）；尚未在實際 TronClass 環境驗證過點名是否會成功。**
 >
 > 也就是說：
+>
 > - 預設的「命中判定」規則(`defaultIsMatch`)是**保守猜測**，可能與實際 TronClass 回應格式不一致
 > - 實際 TronClass 後端可能會：
 >   - 對連續錯誤 PIN 觸發伺服器端 rate limit / 帳號鎖定
@@ -48,6 +49,7 @@ v3.0.0 的早期版本/文件曾暗示 `getActiveRollcalls()` 能直接取得 4 
 > - 真實環境的 PIN 命中速度也取決於伺服器處理能力
 >
 > **第一次使用時請務必：**
+>
 > 1. 把 `concurrency` 調低（例如 5–10）
 > 2. 用 `onProgress` 觀察伺服器回應狀態碼與訊息
 > 3. 若 `defaultIsMatch` 判定有誤，傳入自訂 `isMatch` 覆寫
@@ -73,6 +75,11 @@ const result = await tc.attendance.bruteForceNumberRollcall(rollcalls[0].id, {
 console.log(`找到 PIN：${result.numberCode}，共嘗試 ${result.attempts} 次`);
 ```
 
+## v4.0.1 更新內容（patch）
+
+- `**getHomeworkDetail()**`：先請求課程底下的作業詳情 `GET /api/courses/{courseId}/homework-activities/{activityId}`；若後端回傳 **404**（部分租戶未綁這條路由，例如輔仁 `elearn2.fju.edu.tw` 等情境，見 [#1](https://github.com/seven-317/Tronclass-API/issues/1)），會自動改打 `**GET /api/activities/{activityId}`**。其它錯誤狀態碼行為維持不變（仍為 `ApiError`）。
+- **注意**：fallback 回應來自通用活動詳情 API，欄位形狀可能與原本「homework-specific」詳情不完全相同；若你仰賴僅在原路由出現的欄位（例如較完整的 `submissions`），可能仍需搭配 `getHomeworkActivities(courseId)` 或其它端點補資料。
+
 ## 主要特色
 
 - 🔐 **Keycloak CAS 認證** — 自動偵測 Keycloak 與傳統 CAS 流程，內建 [Tesseract.js](https://github.com/naptha/tesseract.js/) 驗證碼 OCR
@@ -94,7 +101,7 @@ console.log(`找到 PIN：${result.numberCode}，共嘗試 ${result.attempts} �
 ```bash
 npm install tronclass-api
 # 或指定版本，例如：
-# npm install tronclass-api@4.0.0
+# npm install tronclass-api@4.0.1
 ```
 
 ```bash
@@ -147,6 +154,7 @@ import { TronClass, Schools, solveCaptcha } from 'tronclass-api';
 ```
 
 > ⚠️ 從 GitHub 安裝時 npm 會自動執行 `npm install` 與 build。若你的環境沒有 TypeScript / `tsc`，可能需要在你的專案內執行：
+>
 > ```bash
 > cd node_modules/tronclass-api
 > npm install
@@ -290,68 +298,86 @@ const tc2 = new TronClass(
 
 建立一個新的 TronClass 客戶端實例。
 
-| 參數 | 型別 | 說明 |
-|---|---|---|
-| `config` | `SchoolConfig \| string` | 預設學校或 base URL 字串 |
-| `options.maxRetries` | `number` | 最大重試次數（預設：`3`） |
-| `options.rpm` | `number` | 每分鐘最多請求數（預設：`60`） |
+
+| 參數                   | 型別                      | 說明                |
+| -------------------- | ----------------------- | ----------------- |
+| `config`             | `SchoolConfig | string` | 預設學校或 base URL 字串 |
+| `options.maxRetries` | `number`                | 最大重試次數（預設：`3`）    |
+| `options.rpm`        | `number`                | 每分鐘最多請求數（預設：`60`） |
+
 
 ### 認證
 
-| 方法 | 回傳 | 說明 |
-|---|---|---|
+
+| 方法                                               | 回傳                       | 說明                                   |
+| ------------------------------------------------ | ------------------------ | ------------------------------------ |
 | `tc.login({ username, password, ocrFunction? })` | `Promise<LoginResponse>` | 透過 CAS SSO 登入；可傳 `ocrFunction` 處理驗證碼 |
-| `tc.isLoggedIn` | `boolean` | session 是否仍有效 |
+| `tc.isLoggedIn`                                  | `boolean`                | session 是否仍有效                        |
+
 
 ### 課程 (Courses)
 
-| 方法 | 說明 |
-|---|---|
-| `.getMyCourses(conditions?)` | 列出已選課程（預設包含所有學期） |
-| `.getActiveCourses()` | 列出目前進行中的課程 |
-| `.getRecentCourses()` | 列出最近瀏覽過的課程 |
-| `.getCourseById(courseId)` | 依 ID 取得單一課程 |
-| `.getCourseModules(courseId)` | 取得課程模組/章節 |
-| `.getMySemesters()` | 列出所有學期 |
-| `.getMyAcademicYears()` | 列出所有學年度 |
+
+| 方法                            | 說明               |
+| ----------------------------- | ---------------- |
+| `.getMyCourses(conditions?)`  | 列出已選課程（預設包含所有學期） |
+| `.getActiveCourses()`         | 列出目前進行中的課程       |
+| `.getRecentCourses()`         | 列出最近瀏覽過的課程       |
+| `.getCourseById(courseId)`    | 依 ID 取得單一課程      |
+| `.getCourseModules(courseId)` | 取得課程模組/章節        |
+| `.getMySemesters()`           | 列出所有學期           |
+| `.getMyAcademicYears()`       | 列出所有學年度          |
+
 
 ### 待辦 (Todos)
 
-| 方法 | 說明 |
-|---|---|
+
+| 方法            | 說明             |
+| ------------- | -------------- |
 | `.getTodos()` | 列出待辦事項（作業、測驗等） |
+
 
 ### 作業 (Assignments)
 
-| 方法 | 說明 |
-|---|---|
-| `.getHomeworkActivities(courseId)` | 列出某課程的所有作業 |
-| `.getHomeworkDetail(courseId, activityId)` | 取得作業詳細資訊 |
-| `.submitHomework(courseId, activityId, content)` | 繳交作業 |
+> **v4.0.1：** `getHomeworkDetail` 在遇到課程路徑回 **404** 時會自動改打 `/api/activities/{activityId}`（詳見下文 **v4.0.1 更新內容（patch）** 與 [Issue #1](https://github.com/seven-317/Tronclass-API/issues/1)）。
+
+
+| 方法                                               | 說明                                              |
+| ------------------------------------------------ | ----------------------------------------------- |
+| `.getHomeworkActivities(courseId)`               | 列出某課程的所有作業                                      |
+| `.getHomeworkDetail(courseId, activityId)`       | 取得作業詳細資訊（先走課程路徑，**404** 時 fallback 至通用活動詳情 API） |
+| `.submitHomework(courseId, activityId, content)` | 繳交作業                                            |
+
 
 ### 教材 (Materials)
 
-| 方法 | 說明 |
-|---|---|
+
+| 方法                              | 說明        |
+| ------------------------------- | --------- |
 | `.getCourseMaterials(courseId)` | 列出課程教材/活動 |
-| `.downloadFile(fileUrl)` | 下載教材檔案 |
+| `.downloadFile(fileUrl)`        | 下載教材檔案    |
+
 
 ### 成績 (Grades)
 
-| 方法 | 說明 |
-|---|---|
+
+| 方法                           | 說明       |
+| ---------------------------- | -------- |
 | `.getCourseGrades(courseId)` | 取得課程考試成績 |
-| `.getExamList(courseId)` | 取得課程考試清單 |
+| `.getExamList(courseId)`     | 取得課程考試清單 |
+
 
 ### 公告與通知 (Announcements & Notifications)
 
-| 方法 | 說明 |
-|---|---|
-| `.getAnnouncements(page?, pageSize?)` | 列出全校公告（含分頁） |
-| `.getLatestBulletins()` | 取得最新公告（dashboard 顯示用） |
-| `.getClassifications()` | 取得公告分類 |
-| `.getCourseAnnouncements(courseId)` | 列出某課程的公告 |
-| `.getNotifications()` | 列出通知訊息 |
+
+| 方法                                    | 說明                    |
+| ------------------------------------- | --------------------- |
+| `.getAnnouncements(page?, pageSize?)` | 列出全校公告（含分頁）           |
+| `.getLatestBulletins()`               | 取得最新公告（dashboard 顯示用） |
+| `.getClassifications()`               | 取得公告分類                |
+| `.getCourseAnnouncements(courseId)`   | 列出某課程的公告              |
+| `.getNotifications()`                 | 列出通知訊息                |
+
 
 ### 點名 (Attendance / Rollcall)
 
@@ -359,25 +385,29 @@ const tc2 = new TronClass(
 >
 > ⚠️ **本功能尚未在真實 TronClass 環境測試過，僅通過編譯與單元測試；僅作學習用途，不保證可用性與合法性。**
 
-| 方法 | 說明 |
-|---|---|
-| `.getActiveRollcalls()` | 列出所有進行中的點名（不含 PIN） |
-| `.tryNumberRollcall(rollcallId, code, options?)` | 嘗試送出單一 PIN（不丟錯，回傳 ok 與否） |
-| `.submitNumberRollcall(rollcallId, code)` | 送出已知正確的 PIN（失敗會丟錯） |
+
+| 方法                                                | 說明                           |
+| ------------------------------------------------- | ---------------------------- |
+| `.getActiveRollcalls()`                           | 列出所有進行中的點名（不含 PIN）           |
+| `.tryNumberRollcall(rollcallId, code, options?)`  | 嘗試送出單一 PIN（不丟錯，回傳 ok 與否）     |
+| `.submitNumberRollcall(rollcallId, code)`         | 送出已知正確的 PIN（失敗會丟錯）           |
 | `.bruteForceNumberRollcall(rollcallId, options?)` | **🔥 高併發暴力嘗試 4 位 PIN，命中即回傳** |
 
-**`bruteForceNumberRollcall` 選項：**
 
-| 選項 | 型別 | 預設值 | 說明 |
-|---|---|---|---|
-| `concurrency` | `number` | `50` | 同時並發的 worker 數量 |
-| `startFrom` | `number` | `0` | 起始 PIN（含） |
-| `endAt` | `number` | `10000` | 結束 PIN（不含） |
-| `shuffle` | `boolean` | `false` | 是否打亂測試順序（Fisher–Yates） |
-| `delayMs` | `number` | `0` | 每個 worker 兩次嘗試之間的延遲 |
-| `onProgress` | `(info) => void` | — | 進度回呼，每次嘗試完成都會呼叫 |
-| `isMatch` | `(result, code) => boolean` | 預設判定 | 自訂「PIN 命中」邏輯 |
-| `signal` | `AbortSignal` | — | 外部中止訊號 |
+`**bruteForceNumberRollcall` 選項：**
+
+
+| 選項            | 型別                          | 預設值     | 說明                     |
+| ------------- | --------------------------- | ------- | ---------------------- |
+| `concurrency` | `number`                    | `50`    | 同時並發的 worker 數量        |
+| `startFrom`   | `number`                    | `0`     | 起始 PIN（含）              |
+| `endAt`       | `number`                    | `10000` | 結束 PIN（不含）             |
+| `shuffle`     | `boolean`                   | `false` | 是否打亂測試順序（Fisher–Yates） |
+| `delayMs`     | `number`                    | `0`     | 每個 worker 兩次嘗試之間的延遲    |
+| `onProgress`  | `(info) => void`            | —       | 進度回呼，每次嘗試完成都會呼叫        |
+| `isMatch`     | `(result, code) => boolean` | 預設判定    | 自訂「PIN 命中」邏輯           |
+| `signal`      | `AbortSignal`               | —       | 外部中止訊號                 |
+
 
 **使用範例：**
 
@@ -510,10 +540,12 @@ await tc.login({
 
 ## 內建學校
 
-| Key | 名稱 |
-|---|---|
-| `ASIA_UNIVERSITY` | 亞洲大學 |
+
+| Key                     | 名稱   |
+| ----------------------- | ---- |
+| `ASIA_UNIVERSITY`       | 亞洲大學 |
 | `SHIH_CHIEN_UNIVERSITY` | 實踐大學 |
+
 
 > **想新增學校？** 使用 `createSchoolConfig()`，或直接送 PR 到 `src/config/schools.ts`。
 
@@ -538,24 +570,28 @@ const embed = DiscordFormatter.formatDeadlines(data);
 
 高階聚合層，把多個底層 API 合併成方便的單一方法：
 
-| 方法 | 說明 |
-|---|---|
-| `getDashboard()` | 進行中課程 + 進行中點名 + 最近待辦 + 最新公告 |
-| `getCourseOverview(courseId)` | 課程資訊 + 作業 + 教材 |
-| `getUpcomingDeadlines(days?)` | 依截止時間排序的近期 deadline |
-| `getAnnouncementSummaries(limit?)` | 簡短的近期公告摘要 |
-| `getCourseGradeSummary(courseId)` | 某課程的成績明細 |
+
+| 方法                                 | 說明                          |
+| ---------------------------------- | --------------------------- |
+| `getDashboard()`                   | 進行中課程 + 進行中點名 + 最近待辦 + 最新公告 |
+| `getCourseOverview(courseId)`      | 課程資訊 + 作業 + 教材              |
+| `getUpcomingDeadlines(days?)`      | 依截止時間排序的近期 deadline         |
+| `getAnnouncementSummaries(limit?)` | 簡短的近期公告摘要                   |
+| `getCourseGradeSummary(courseId)`  | 某課程的成績明細                    |
+
 
 ### 訊息格式器 (Formatters)
 
 把 `TronClassService` 的輸出轉換成各平台的訊息格式：
 
-| 格式器 | 輸出 | 相依套件 |
-|---|---|---|
-| `DiscordFormatter` | Discord Embed JSON | 無（搭配 `discord.js` 的 `EmbedBuilder` 使用） |
-| `LineFormatter` | LINE Flex Message JSON | 無（搭配 `@line/bot-sdk` 使用） |
 
-完整範例請見 [`examples/discord-bot.ts`](examples/discord-bot.ts) 與 [`examples/line-bot.ts`](examples/line-bot.ts)。
+| 格式器                | 輸出                     | 相依套件                                   |
+| ------------------ | ---------------------- | -------------------------------------- |
+| `DiscordFormatter` | Discord Embed JSON     | 無（搭配 `discord.js` 的 `EmbedBuilder` 使用） |
+| `LineFormatter`    | LINE Flex Message JSON | 無（搭配 `@line/bot-sdk` 使用）               |
+
+
+完整範例請見 `[examples/discord-bot.ts](examples/discord-bot.ts)` 與 `[examples/line-bot.ts](examples/line-bot.ts)`。
 
 ## 執行範例
 
@@ -624,10 +660,3 @@ examples/
 
 ## Star History
 
-<a href="https://www.star-history.com/#seven-317/Tronclass-API&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=seven-317/Tronclass-API&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=seven-317/Tronclass-API&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=seven-317/Tronclass-API&type=date&legend=top-left" />
- </picture>
-</a>
