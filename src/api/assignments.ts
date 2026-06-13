@@ -1,6 +1,14 @@
 import { ApiError } from '../core/errors.js';
 import type { HttpClient } from '../core/http-client.js';
-import type { HomeworkActivity, HomeworkDetail } from '../types/index.js';
+import type {
+  HomeworkActivitiesResponse,
+  HomeworkActivity,
+  HomeworkDetail,
+  PaginationOptions,
+} from '../types/index.js';
+
+/** Guard against runaway loops if a tenant returns inconsistent pagination metadata. */
+const MAX_HOMEWORK_PAGES = 100;
 
 export class AssignmentsApi {
   constructor(
@@ -8,11 +16,52 @@ export class AssignmentsApi {
     private baseUrl: string,
   ) {}
 
-  async getHomeworkActivities(courseId: number): Promise<HomeworkActivity[]> {
-    const data = await this.httpClient.getJson<{ homework_activities: HomeworkActivity[] }>(
-      `${this.baseUrl}/api/courses/${courseId}/homework-activities`,
+  /**
+   * 列出某課程的作業。
+   *
+   * 此端點在部分租戶（例如 FJU `elearn2.fju.edu.tw`）有分頁，預設 `page_size=10`，
+   * 因此預設會**自動翻完所有頁**並回傳完整清單（GitHub issue #2）。
+   * 若只想取單一頁，傳入 `{ page }`（搭配可選的 `pageSize`）。
+   */
+  async getHomeworkActivities(
+    courseId: number,
+    opts?: PaginationOptions,
+  ): Promise<HomeworkActivity[]> {
+    const pageSize = opts?.pageSize ?? 100;
+
+    // 明確指定單頁 → 尊重 caller,只取該頁。
+    if (opts?.page !== undefined) {
+      const data = await this.fetchHomeworkPage(courseId, opts.page, pageSize);
+      return data.homework_activities ?? [];
+    }
+
+    // 預設:翻完所有頁,符合「列出所有作業」契約。
+    const first = await this.fetchHomeworkPage(courseId, 1, pageSize);
+    const all = [...(first.homework_activities ?? [])];
+
+    const totalPages =
+      first.pages ??
+      (first.total !== undefined && first.page_size
+        ? Math.ceil(first.total / first.page_size)
+        : 1);
+
+    for (let page = 2; page <= Math.min(totalPages, MAX_HOMEWORK_PAGES); page++) {
+      const items = (await this.fetchHomeworkPage(courseId, page, pageSize)).homework_activities ?? [];
+      if (items.length === 0) break;
+      all.push(...items);
+    }
+
+    return all;
+  }
+
+  private fetchHomeworkPage(
+    courseId: number,
+    page: number,
+    pageSize: number,
+  ): Promise<HomeworkActivitiesResponse> {
+    return this.httpClient.getJson<HomeworkActivitiesResponse>(
+      `${this.baseUrl}/api/courses/${courseId}/homework-activities?page=${page}&page_size=${pageSize}`,
     );
-    return data.homework_activities;
   }
 
   async getHomeworkDetail(courseId: number, activityId: number): Promise<HomeworkDetail> {
