@@ -12,14 +12,14 @@
 
 透過 Keycloak CAS SSO 自動登入（含驗證碼自動 OCR 辨識），並查詢課程、待辦、作業、教材、成績、公告、點名等所有資源 — 全部透過一個帶完整型別的 API。
 
-## ⚠️ 免責聲明（v4.0.1）
+## 免責聲明（v4.0.1）
 
 > **此專案僅作為學習用途製作，不保證可用性、穩定性，亦不保證任何使用情境下的合法性。**
 > 使用者應自行承擔使用本套件所造成的一切後果。請勿將本套件用於違反學校或 TronClass 服務條款的場景。
 
-## 🎉 v4.0.0 更新內容
+## v4.0.0 更新內容
 
-### 🙏 對 v3.0.0 文件錯誤的道歉
+### 對 v3.0.0 文件錯誤的道歉
 
 v3.0.0 的早期版本/文件曾暗示 `getActiveRollcalls()` 能直接取得 4 位數點名 PIN — 這是**錯誤資訊**，特此致歉。實際上 TronClass 並未在 `/api/training/activities` 或任何已知 list 端點暴露 PIN 碼，`number_code` 永遠是 `undefined`。
 
@@ -27,15 +27,15 @@ v3.0.0 的早期版本/文件曾暗示 `getActiveRollcalls()` 能直接取得 4 
 
 既然伺服器不會主動給 PIN，v4.0.0 採用**完全不同的實作策略** — 對 `0000`–`9999` 共 10000 組組合進行高併發測試，命中正確 PIN 即停止：
 
-- ✅ `**bruteForceNumberRollcall()`\*\* — 共享工作佇列 + worker pool + AbortController 設計
-- ✅ **可組態併發數** — 預設 50，可依網路與伺服器情況調整
-- ✅ **找到即終止** — 任一 worker 命中後，立刻 `abort()` 中止其他 in-flight 請求
-- ✅ **進度回呼** — `onProgress` 即時回報嘗試進度
-- ✅ **支援取消** — 接受外部 `AbortSignal`(逾時 / UI 取消)
-- ✅ **打亂順序** — `shuffle: true` 用 Fisher–Yates 演算法避免從 0000 開始
-- ✅ **可覆寫命中判定** — `isMatch` 讓你根據實際 TronClass 回應特徵自訂
+- **`bruteForceNumberRollcall()`** — 共享工作佇列 + worker pool + AbortController 設計
+- **可組態併發數** — 預設 50，可依網路與伺服器情況調整
+- **找到即終止** — 任一 worker 命中後，立刻 `abort()` 中止其他 in-flight 請求
+- **進度回呼** — `onProgress` 即時回報嘗試進度
+- **支援取消** — 接受外部 `AbortSignal`(逾時 / UI 取消)
+- **打亂順序** — `shuffle: true` 用 Fisher–Yates 演算法避免從 0000 開始
+- **可覆寫命中判定** — `isMatch` 讓你根據實際 TronClass 回應特徵自訂
 
-### ⚠️ 重要：尚未實際點名測試
+### 重要：尚未實際點名測試
 
 > **目前 v4.0.0 僅通過 TypeScript 編譯與 24 個 vitest 單元測試（含 fast-check property test）；尚未在實際 TronClass 環境驗證過點名是否會成功。**
 >
@@ -77,20 +77,24 @@ console.log(`找到 PIN：${result.numberCode}，共嘗試 ${result.attempts} �
 
 ## v4.0.1 更新內容（patch）
 
-- `**getHomeworkDetail()**`：先請求課程底下的作業詳情 `GET /api/courses/{courseId}/homework-activities/{activityId}`；若後端回傳 **404**（部分租戶未綁這條路由，例如輔仁 `elearn2.fju.edu.tw` 等情境，見 [#1](https://github.com/seven-317/Tronclass-API/issues/1)），會自動改打 `**GET /api/activities/{activityId}`\*\*。其它錯誤狀態碼行為維持不變（仍為 `ApiError`）。
+- **`getHomeworkDetail()`**：先請求課程底下的作業詳情 `GET /api/courses/{courseId}/homework-activities/{activityId}`；若後端回傳 **404**（部分租戶未綁這條路由，例如輔仁 `elearn2.fju.edu.tw` 等情境，見 [#1](https://github.com/seven-317/Tronclass-API/issues/1)），會自動改打 **`GET /api/activities/{activityId}`**。其它錯誤狀態碼行為維持不變（仍為 `ApiError`）。
 - **注意**：fallback 回應來自通用活動詳情 API，欄位形狀可能與原本「homework-specific」詳情不完全相同；若你仰賴僅在原路由出現的欄位（例如較完整的 `submissions`），可能仍需搭配 `getHomeworkActivities(courseId)` 或其它端點補資料。
+
+## v4.1.0 更新內容（minor）
+
+- **`getHomeworkActivities(courseId, opts?)`**：此端點在部分租戶（例如輔仁 `elearn2.fju.edu.tw`）有分頁、預設 `page_size=10`，先前只會回傳前 10 筆作業（見 [#2](https://github.com/seven-317/Tronclass-API/issues/2)）。現在預設會**自動翻完所有頁**並回傳完整清單；若只想取單一頁，可傳入 `{ page, pageSize? }`（`pageSize` 預設 100）。回傳型別維持 `HomeworkActivity[]`，向後相容。
 
 ## 主要特色
 
-- 🔐 **Keycloak CAS 認證** — 自動偵測 Keycloak 與傳統 CAS 流程，內建 [Tesseract.js](https://github.com/naptha/tesseract.js/) 驗證碼 OCR
-- 📚 **完整 API 覆蓋** — 課程、待辦、作業、教材、成績、公告、通知、點名（rollcall）
-- 🏫 **多校支援** — 內建學校設定，亦可自定義
-- ⚡ **內建速率限制** — 可調整 RPM 上限
-- 🔄 **自動重試** — 指數退避（exponential backoff）
-- 🍪 **Cookie 持久化** — 透過 `tough-cookie` + `fetch-cookie` 維持登入 session
-- 🛡️ **型別化錯誤** — `RateLimitError`、`AuthenticationError`、`NetworkError`、`ApiError`、`NumberCodeNotFoundError`
-- 🤖 **Bot 介接** — 內建 Discord 與 LINE bot 訊息格式器（Embeds / Flex Messages）
-- 📝 **完整型別定義** — 所有 API 回應皆有 TypeScript 型別
+- **Keycloak CAS 認證** — 自動偵測 Keycloak 與傳統 CAS 流程，內建 [Tesseract.js](https://github.com/naptha/tesseract.js/) 驗證碼 OCR
+- **完整 API 覆蓋** — 課程、待辦、作業、教材、成績、公告、通知、點名（rollcall）
+- **多校支援** — 內建學校設定，亦可自定義
+- **內建速率限制** — 可調整 RPM 上限
+- **自動重試** — 指數退避（exponential backoff）
+- **Cookie 持久化** — 透過 `tough-cookie` + `fetch-cookie` 維持登入 session
+- **型別化錯誤** — `RateLimitError`、`AuthenticationError`、`NetworkError`、`ApiError`、`NumberCodeNotFoundError`
+- **Bot 介接** — 內建 Discord 與 LINE bot 訊息格式器（Embeds / Flex Messages）
+- **完整型別定義** — 所有 API 回應皆有 TypeScript 型別
 
 ## 安裝
 
@@ -153,7 +157,7 @@ pnpm add github:seven-317/Tronclass-API
 import { TronClass, Schools, solveCaptcha } from "tronclass-api";
 ```
 
-> ⚠️ 從 GitHub 安裝時 npm 會自動執行 `npm install` 與 build。若你的環境沒有 TypeScript / `tsc`，可能需要在你的專案內執行：
+> 從 GitHub 安裝時 npm 會自動執行 `npm install` 與 build。若你的環境沒有 TypeScript / `tsc`，可能需要在你的專案內執行：
 >
 > ```bash
 > cd node_modules/tronclass-api
@@ -335,9 +339,16 @@ const tc2 = new TronClass(
 
 | 方法                                             | 說明                                                                     |
 | ------------------------------------------------ | ------------------------------------------------------------------------ |
-| `.getHomeworkActivities(courseId)`               | 列出某課程的所有作業                                                     |
+| `.getHomeworkActivities(courseId, opts?)`        | 列出某課程的所有作業（**自動翻頁**取回完整清單，見 [Issue #2](https://github.com/seven-317/Tronclass-API/issues/2)） |
 | `.getHomeworkDetail(courseId, activityId)`       | 取得作業詳細資訊（先走課程路徑，**404** 時 fallback 至通用活動詳情 API） |
 | `.submitHomework(courseId, activityId, content)` | 繳交作業                                                                 |
+
+> **分頁說明：** `/api/courses/{courseId}/homework-activities` 在部分租戶（例如輔仁 `elearn2.fju.edu.tw`）有分頁、預設 `page_size=10`。`getHomeworkActivities(courseId)` 預設會**自動翻完所有頁**並回傳完整清單。若只想取單一頁，傳入 `{ page, pageSize? }`（`pageSize` 預設 100）：
+>
+> ```ts
+> await tc.assignments.getHomeworkActivities(courseId);              // 全部作業（自動翻頁）
+> await tc.assignments.getHomeworkActivities(courseId, { page: 1 }); // 只取第 1 頁
+> ```
 
 ### 教材 (Materials)
 
@@ -365,18 +376,18 @@ const tc2 = new TronClass(
 
 ### 點名 (Attendance / Rollcall)
 
-> **🔥 v4.0.0 新增：** `bruteForceNumberRollcall()` 高併發暴力嘗試 PIN（10000 組組合 + worker pool + AbortController 短路），詳見上方 [v4.0.0 更新內容](#-v400-更新內容)。
+> **v4.0.0 新增：** `bruteForceNumberRollcall()` 高併發暴力嘗試 PIN（10000 組組合 + worker pool + AbortController 短路），詳見上方 [v4.0.0 更新內容](#v400-更新內容)。
 >
-> ⚠️ **本功能尚未在真實 TronClass 環境測試過，僅通過編譯與單元測試；僅作學習用途，不保證可用性與合法性。**
+> **本功能尚未在真實 TronClass 環境測試過，僅通過編譯與單元測試；僅作學習用途，不保證可用性與合法性。**
 
 | 方法                                              | 說明                                       |
 | ------------------------------------------------- | ------------------------------------------ |
 | `.getActiveRollcalls()`                           | 列出所有進行中的點名（不含 PIN）           |
 | `.tryNumberRollcall(rollcallId, code, options?)`  | 嘗試送出單一 PIN（不丟錯，回傳 ok 與否）   |
 | `.submitNumberRollcall(rollcallId, code)`         | 送出已知正確的 PIN（失敗會丟錯）           |
-| `.bruteForceNumberRollcall(rollcallId, options?)` | **🔥 高併發暴力嘗試 4 位 PIN，命中即回傳** |
+| `.bruteForceNumberRollcall(rollcallId, options?)` | **高併發暴力嘗試 4 位 PIN，命中即回傳** |
 
-`**bruteForceNumberRollcall` 選項：\*\*
+**`bruteForceNumberRollcall` 選項：**
 
 | 選項          | 型別                        | 預設值   | 說明                             |
 | ------------- | --------------------------- | -------- | -------------------------------- |

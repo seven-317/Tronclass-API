@@ -1,6 +1,6 @@
 {
   "name": "tronclass-api",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "description": "Unofficial TronClass LMS API library for Node.js / TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

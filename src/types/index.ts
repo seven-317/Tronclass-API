@@ -58,6 +58,21 @@ export interface HomeworkActivity {
   [key: string]: unknown;
 }
 
+export interface PaginationOptions {
+  /** 指定時只取該單頁（不自動翻頁），1-based。 */
+  page?: number;
+  /** 每頁筆數，預設 100。 */
+  pageSize?: number;
+}
+
+export interface HomeworkActivitiesResponse {
+  page?: number;
+  page_size?: number;
+  pages?: number;
+  total?: number;
+  homework_activities: HomeworkActivity[];
+}
+
 export interface HomeworkDetail extends HomeworkActivity {
   content?: string;
   attachments?: MaterialFile[];
